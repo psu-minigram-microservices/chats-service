@@ -2,9 +2,14 @@
 .claude/
 .gradle/
 build/
+out/
 *.jar
 *.iml
 .env
+.DS_Store
+spring-shell.log
+test.mv.db
+test.trace.db
 
 # do not ignore Gradle wrapper files
 !**/gradle/wrapper/gradle-wrapper.jar
