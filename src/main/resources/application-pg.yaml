@@ -1,9 +1,5 @@
 spring:
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:minigram-chats}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:minigram_chats}
     username: ${DB_USERNAME:minigram}
     password: ${DB_PASSWORD:minigram}
-
-  h2:
-    console:
-      enabled: false

@@ -27,11 +27,14 @@ repositories {
 dependencies {
     implementation(libs.bundles.spring.boot.starters)
     implementation(libs.flyway.database.postgresql)
+    implementation(libs.jjwt.api)
     implementation(libs.springdoc.openapi.webmvc.ui)
 
     annotationProcessor(libs.lombok)
 
     runtimeOnly(libs.h2)
+    runtimeOnly(libs.jjwt.impl)
+    runtimeOnly(libs.jjwt.jackson)
     runtimeOnly(libs.postgresql)
 
     testImplementation(libs.bundles.spring.boot.test.starters)

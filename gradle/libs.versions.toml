@@ -2,11 +2,11 @@
 lombok = "1.18.42"
 spring-boot = "4.0.3"
 spring-dependency-management = "1.1.7"
+jjwt = "0.13.0"
 springdoc = "3.0.2"
 
 [libraries]
 # --- spring boot starters ---
-spring-boot-h2console = { module = "org.springframework.boot:spring-boot-h2console" }
 spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
 spring-boot-starter-flyway = { module = "org.springframework.boot:spring-boot-starter-flyway" }
 spring-boot-starter-restclient = { module = "org.springframework.boot:spring-boot-starter-restclient" }
@@ -26,6 +26,9 @@ spring-boot-starter-websocket-test = { module = "org.springframework.boot:spring
 
 # --- 3rd-party ---
 flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql" }
+jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
+jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
+jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
 springdoc-openapi-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 
@@ -39,7 +42,6 @@ junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher
 [bundles]
 # --- spring boot starters ---
 spring-boot-starters = [
-    "spring-boot-h2console",
     "spring-boot-starter-data-jpa",
     "spring-boot-starter-flyway",
     "spring-boot-starter-restclient",

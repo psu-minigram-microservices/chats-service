@@ -8,16 +8,13 @@ spring:
   flyway:
     enabled: true
 
-  h2:
-    console:
-      enabled: true
-
   jackson:
     locale: en_US
 
   jpa:
     hibernate:
       ddl-auto: validate
+    open-in-view: true
     properties:
       hibernate:
         jdbc:
@@ -31,27 +28,27 @@ spring:
 server:
   port: ${SERVER_PORT:8080}
 
-  cors:
-    allowed-origin: http://localhost:8080
-
   jwt:
     secret: ${JWT_SECRET}
 
 logging:
   level:
     root: INFO
+    '[me.soknight.minigram.chats]': DEBUG
+    '[org.hibernate.orm.connections.pooling]': WARN
     '[org.springframework.security]': DEBUG
     '[org.springframework.web]': DEBUG
-    '[me.soknight.minigram.chats]': DEBUG
   pattern:
-    console: '%clr([){faint}%clr(%d{dd.MM.yy}){faint} %clr(%d{HH:mm:ss}){magenta}%clr(]){faint} %clr(%5p) %clr(:){faint} %clr(%-40.40logger{0}){cyan} %clr(:){faint} %m%n%wEx'
+    console: '%clr([){faint}%clr(%d{HH:mm:ss}){magenta}%clr(]){faint} %clr(%5p) %clr(:){faint} %clr(%-40.40logger{0}){cyan} %clr(:){faint} %m%n%wEx'
 
 springdoc:
   api-docs:
+    enabled: true
     path: /docs/openapi
     version: openapi_3_1
   default-produces-media-type: application/json
   enable-spring-security: true
   swagger-ui:
+    enabled: true
     operations-sorter: alpha
     use-root-path: true
