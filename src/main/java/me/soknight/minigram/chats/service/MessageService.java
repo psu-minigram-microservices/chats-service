@@ -2,6 +2,7 @@ package me.soknight.minigram.chats.service;
 
 import lombok.AllArgsConstructor;
 import me.soknight.minigram.chats.exception.ApiException;
+import me.soknight.minigram.chats.model.websocket.ChatEvent;
 import me.soknight.minigram.chats.model.request.EditMessageRequest;
 import me.soknight.minigram.chats.model.dto.MessageDto;
 import me.soknight.minigram.chats.model.request.SendMessageRequest;
@@ -24,6 +25,7 @@ public class MessageService {
     private final @NonNull MessageRepository messageRepository;
     private final @NonNull ChatRepository chatRepository;
     private final @NonNull ChatMemberRepository chatMemberRepository;
+    private final @NonNull ChatEventPublisher eventPublisher;
 
     @Transactional
     public @NonNull MessageDto sendMessage(
@@ -36,7 +38,9 @@ public class MessageService {
         var message = messageRepository.save(new MessageEntity(sender, request.content().trim()));
         chatRepository.updateLastMessageId(chatId, message.getId(), Instant.now());
 
-        return MessageDto.fromEntity(message);
+        var dto = MessageDto.fromEntity(message);
+        eventPublisher.publish(chatId, ChatEvent.messageSent(chatId, dto));
+        return dto;
     }
 
     @Transactional
@@ -49,7 +53,9 @@ public class MessageService {
         message.updateContent(request.content().trim());
 
         var updatedMessage = messageRepository.save(message);
-        return MessageDto.fromEntity(updatedMessage);
+        var dto = MessageDto.fromEntity(updatedMessage);
+        eventPublisher.publish(updatedMessage.getChat().getId(), ChatEvent.messageEdited(updatedMessage.getChat().getId(), dto));
+        return dto;
     }
 
     @Transactional
@@ -61,6 +67,8 @@ public class MessageService {
 
         var newLastMessageId = messageRepository.findLastIdByChatIdExcluding(chatId, messageId).orElse(null);
         chatRepository.updateLastMessageId(chatId, newLastMessageId, Instant.now());
+
+        eventPublisher.publish(chatId, ChatEvent.messageDeleted(chatId, messageId));
     }
 
     private @NonNull ChatMemberEntity getMember(long chatId, long userId) throws ApiException {

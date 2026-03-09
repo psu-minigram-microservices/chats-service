@@ -5,6 +5,7 @@ import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.attribute.ChatMemberRole;
 import me.soknight.minigram.chats.model.attribute.ChatType;
 import me.soknight.minigram.chats.model.dto.ChatDto;
+import me.soknight.minigram.chats.model.websocket.ChatEvent;
 import me.soknight.minigram.chats.model.dto.ChatMemberDto;
 import me.soknight.minigram.chats.model.request.CreateChatRequest;
 import me.soknight.minigram.chats.model.dto.MessageDto;
@@ -32,6 +33,7 @@ public class ChatService {
     private final @NonNull ChatRepository chatRepository;
     private final @NonNull ChatMemberRepository chatMemberRepository;
     private final @NonNull MessageRepository messageRepository;
+    private final @NonNull ChatEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public @NonNull Page<ChatDto> listChats(long userId, @NonNull Pageable pageable) {
@@ -67,7 +69,9 @@ public class ChatService {
         chatMemberRepository.save(member);
         chatRepository.touch(chatId, Instant.now());
 
-        return ChatMemberDto.fromEntity(member);
+        var dto = ChatMemberDto.fromEntity(member);
+        eventPublisher.publish(chatId, ChatEvent.memberJoined(chatId, dto));
+        return dto;
     }
 
     @Transactional
@@ -103,6 +107,8 @@ public class ChatService {
         var member = getMember(chatId, userId);
         chat.getMembers().remove(member);
         chatRepository.touch(chatId, Instant.now());
+
+        eventPublisher.publish(chatId, ChatEvent.memberLeft(chatId, userId));
     }
 
     @Transactional
@@ -120,6 +126,8 @@ public class ChatService {
         var member = getMember(chatId, kickedUserId);
         chat.getMembers().remove(member);
         chatRepository.touch(chatId, Instant.now());
+
+        eventPublisher.publish(chatId, ChatEvent.memberLeft(chatId, kickedUserId));
     }
 
     @Transactional

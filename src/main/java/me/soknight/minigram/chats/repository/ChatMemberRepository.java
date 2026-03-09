@@ -5,9 +5,13 @@ import me.soknight.minigram.chats.model.entity.ChatMemberId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ChatMemberRepository extends JpaRepository<ChatMemberEntity, ChatMemberId> {
+
+    @Query("select cm.id.userId from ChatMemberEntity cm where cm.chat.id = :chatId")
+    List<Long> findUserIdsByChatId(long chatId);
 
     @Query("""
             select chat_member
