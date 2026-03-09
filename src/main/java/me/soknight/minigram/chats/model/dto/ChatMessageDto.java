@@ -1,12 +1,12 @@
 package me.soknight.minigram.chats.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import me.soknight.minigram.chats.model.entity.MessageEntity;
+import me.soknight.minigram.chats.model.entity.ChatMessageEntity;
 import org.jspecify.annotations.NonNull;
 
 import java.time.Instant;
 
-public record MessageDto(
+public record ChatMessageDto(
         @JsonProperty("id") long id,
         @JsonProperty("chat") ChatDto chat,
         @JsonProperty("sender") ChatMemberDto sender,
@@ -15,9 +15,9 @@ public record MessageDto(
         @JsonProperty("updated_at") Instant updatedAt
 ) {
 
-    public static @NonNull MessageDto fromEntity(@NonNull MessageEntity message) {
-        return new MessageDto(
-                message.getId(),
+    public static @NonNull ChatMessageDto fromEntity(@NonNull ChatMessageEntity message) {
+        return new ChatMessageDto(
+                message.getMessageId(),
                 ChatDto.fromEntity(message.getChat()),
                 ChatMemberDto.fromEntity(message.getSender()),
                 message.getContent(),

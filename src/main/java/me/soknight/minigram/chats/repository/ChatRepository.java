@@ -46,4 +46,11 @@ public interface ChatRepository extends JpaRepository<ChatEntity, Long> {
     @Query("update ChatEntity chat set chat.updatedAt = :now where chat.id = :chatId")
     void touch(long chatId, Instant now);
 
+    @Modifying
+    @Query("update ChatEntity chat set chat.messageSequence = chat.messageSequence + 1 where chat.id = :chatId")
+    void incrementMessageSequence(long chatId);
+
+    @Query("select chat.messageSequence from ChatEntity chat where chat.id = :chatId")
+    long getMessageSequence(long chatId);
+
 }
