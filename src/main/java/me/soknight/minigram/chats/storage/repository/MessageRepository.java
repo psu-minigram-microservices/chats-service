@@ -15,15 +15,17 @@ public interface MessageRepository extends JpaRepository<MessageEntity, Long> {
             select message from MessageEntity message
             where message.chat.id = :chatId
             order by message.createdAt desc, message.id desc
+            offset :offset rows
+            fetch first :limit rows only
             """)
-    List<MessageEntity> findByChatId(long chatId);
+    List<MessageEntity> findByChatId(long chatId, int offset, int limit);
 
     @Query("""
-            select message from MessageEntity message
+            select message.id from MessageEntity message
             where message.chat.id = :chatId and message.id <> :excludedMessageId
             order by message.createdAt desc, message.id desc
             limit 1
             """)
-    Optional<MessageEntity> findLastByChatIdExcluding(long chatId, long excludedMessageId);
+    Optional<Long> findLastIdByChatIdExcluding(long chatId, long excludedMessageId);
 
 }
