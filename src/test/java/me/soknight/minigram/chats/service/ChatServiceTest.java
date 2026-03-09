@@ -10,6 +10,8 @@ import me.soknight.minigram.chats.model.dto.SendMessageRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -100,13 +102,16 @@ class ChatServiceTest {
         chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of(2L)));
         flushAndClear();
 
-        var user1Chats = chatService.listChats(1L);
-        var user2Chats = chatService.listChats(2L);
-        var user3Chats = chatService.listChats(3L);
+        var defaultPage = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "updatedAt", "id"));
 
-        assertThat(user1Chats).hasSize(2);
-        assertThat(user2Chats).hasSize(2);
-        assertThat(user3Chats).isEmpty();
+        var user1Chats = chatService.listChats(1L, defaultPage);
+        var user2Chats = chatService.listChats(2L, defaultPage);
+        var user3Chats = chatService.listChats(3L, defaultPage);
+
+        assertThat(user1Chats.getContent()).hasSize(2);
+        assertThat(user1Chats.getTotalElements()).isEqualTo(2);
+        assertThat(user2Chats.getContent()).hasSize(2);
+        assertThat(user3Chats.getContent()).isEmpty();
     }
 
     // --- getChat ---
@@ -271,11 +276,15 @@ class ChatServiceTest {
             flushAndClear();
         }
 
-        var all = chatService.getMessages(1L, chat.id(), 0);
-        assertThat(all).hasSize(5);
+        var messagesSort = Sort.by(Sort.Direction.DESC, "createdAt", "id");
 
-        var fromOffset = chatService.getMessages(1L, chat.id(), 3);
-        assertThat(fromOffset).hasSize(2);
+        var all = chatService.getMessages(1L, chat.id(), PageRequest.of(0, 50, messagesSort));
+        assertThat(all.getContent()).hasSize(5);
+        assertThat(all.getTotalElements()).isEqualTo(5);
+
+        var secondPage = chatService.getMessages(1L, chat.id(), PageRequest.of(1, 3, messagesSort));
+        assertThat(secondPage.getContent()).hasSize(2);
+        assertThat(secondPage.getTotalElements()).isEqualTo(5);
     }
 
     @Test
@@ -283,7 +292,8 @@ class ChatServiceTest {
         var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.SAVED, null, null));
         flushAndClear();
 
-        assertThatThrownBy(() -> chatService.getMessages(999L, chat.id(), 0))
+        var pageable = PageRequest.of(0, 50, Sort.by(Sort.Direction.DESC, "createdAt", "id"));
+        assertThatThrownBy(() -> chatService.getMessages(999L, chat.id(), pageable))
                 .isInstanceOf(ApiException.class);
     }
 

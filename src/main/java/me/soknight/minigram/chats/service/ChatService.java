@@ -15,6 +15,8 @@ import me.soknight.minigram.chats.storage.repository.ChatRepository;
 import me.soknight.minigram.chats.storage.repository.MessageRepository;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,17 +30,14 @@ import java.util.Set;
 @AllArgsConstructor
 public class ChatService {
 
-    private static final int DEFAULT_MESSAGES_BATCH_SIZE = 50;
-
     private final @NonNull ChatRepository chatRepository;
     private final @NonNull ChatMemberRepository chatMemberRepository;
     private final @NonNull MessageRepository messageRepository;
 
     @Transactional(readOnly = true)
-    public @NonNull List<ChatDto> listChats(long userId) {
-        return chatRepository.findAllByMemberUserId(userId).stream()
-                .map(ChatDto::fromEntity)
-                .toList();
+    public @NonNull Page<ChatDto> listChats(long userId, @NonNull Pageable pageable) {
+        return chatRepository.findAllByMemberUserId(userId, pageable)
+                .map(ChatDto::fromEntity);
     }
 
     @Transactional(readOnly = true)
@@ -47,13 +46,10 @@ public class ChatService {
     }
 
     @Transactional(readOnly = true)
-    public @NonNull List<MessageDto> getMessages(long userId, long chatId, int from) throws ApiException {
-        if (from < 0) throw new ApiException("invalid_from", "`from` must be greater than or equal to zero");
-
+    public @NonNull Page<MessageDto> getMessages(long userId, long chatId, @NonNull Pageable pageable) throws ApiException {
         var chat = getAccessibleChat(chatId, userId);
-        return messageRepository.findByChatId(chat.getId(), from, DEFAULT_MESSAGES_BATCH_SIZE).stream()
-                .map(MessageDto::fromEntity)
-                .toList();
+        return messageRepository.findByChatId(chat.getId(), pageable)
+                .map(MessageDto::fromEntity);
     }
 
     @Transactional

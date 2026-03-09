@@ -1,7 +1,6 @@
 package me.soknight.minigram.chats.controller;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import me.soknight.minigram.chats.exception.ApiException;
@@ -11,13 +10,15 @@ import me.soknight.minigram.chats.model.dto.CreateChatRequest;
 import me.soknight.minigram.chats.model.dto.MessageDto;
 import me.soknight.minigram.chats.service.ChatService;
 import org.jspecify.annotations.Nullable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Validated
 @RestController
@@ -28,8 +29,11 @@ public class ChatController extends ApiControllerBase {
     private final ChatService chatService;
 
     @GetMapping
-    public List<ChatDto> listChats(@Nullable Authentication authentication) throws ApiException {
-        return chatService.listChats(extractUserId(authentication));
+    public Page<ChatDto> listChats(
+            @PageableDefault(sort = {"updatedAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable,
+            @Nullable Authentication authentication
+    ) throws ApiException {
+        return chatService.listChats(extractUserId(authentication), pageable);
     }
 
     @GetMapping("/{id}")
@@ -41,12 +45,12 @@ public class ChatController extends ApiControllerBase {
     }
 
     @GetMapping("/{id}/messages")
-    public List<MessageDto> getMessages(
+    public Page<MessageDto> getMessages(
             @PathVariable("id") @Positive long chatId,
-            @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
+            @PageableDefault(size = 50, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable,
             @Nullable Authentication authentication
     ) throws ApiException {
-        return chatService.getMessages(extractUserId(authentication), chatId, from);
+        return chatService.getMessages(extractUserId(authentication), chatId, pageable);
     }
 
     @PostMapping("/{id}/invite")

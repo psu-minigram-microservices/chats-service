@@ -8,6 +8,8 @@ import me.soknight.minigram.chats.model.dto.CreateChatRequest;
 import me.soknight.minigram.chats.model.dto.EditMessageRequest;
 import me.soknight.minigram.chats.model.dto.SendMessageRequest;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
@@ -124,8 +126,8 @@ class MessageServiceTest {
         messageService.deleteMessage(1L, message.id());
         flushAndClear();
 
-        var messages = chatService.getMessages(1L, chat.id(), 0);
-        assertThat(messages).isEmpty();
+        var messages = chatService.getMessages(1L, chat.id(), PageRequest.of(0, 50, Sort.by(Sort.Direction.DESC, "createdAt", "id")));
+        assertThat(messages.getContent()).isEmpty();
     }
 
     @Test

@@ -104,6 +104,46 @@ class MessageControllerApiTest {
     }
 
     @Test
+    void getMessages_paginationWithCustomPageSize() throws Exception {
+        long chatId = createDirectChat();
+        for (int i = 0; i < 5; i++)
+            messageService.sendMessage(1L, chatId, new SendMessageRequest("message " + i));
+
+        mockMvc.perform(get("/chats/{id}/messages", chatId)
+                        .with(authUser(1))
+                        .queryParam("page", "0")
+                        .queryParam("size", "3"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(3))
+                .andExpect(jsonPath("$.totalElements").value(5))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.size").value(3));
+
+        mockMvc.perform(get("/chats/{id}/messages", chatId)
+                        .with(authUser(1))
+                        .queryParam("page", "1")
+                        .queryParam("size", "3"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.totalElements").value(5))
+                .andExpect(jsonPath("$.number").value(1));
+    }
+
+    @Test
+    void getMessages_defaultSortIsNewestFirst() throws Exception {
+        long chatId = createDirectChat();
+        var first = messageService.sendMessage(1L, chatId, new SendMessageRequest("first"));
+        var second = messageService.sendMessage(1L, chatId, new SendMessageRequest("second"));
+
+        mockMvc.perform(get("/chats/{id}/messages", chatId)
+                        .with(authUser(1)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(second.id()))
+                .andExpect(jsonPath("$.content[1].id").value(first.id()));
+    }
+
+    @Test
     void deleteMessage_returnsNoContentAndRemovesMessage() throws Exception {
         long chatId = createDirectChat();
         var message = messageService.sendMessage(1L, chatId, new SendMessageRequest("to delete"));
@@ -115,7 +155,7 @@ class MessageControllerApiTest {
         mockMvc.perform(get("/chats/{id}/messages", chatId)
                         .with(authUser(1)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.content.length()").value(0));
     }
 
     private long createDirectChat() throws ApiException {
