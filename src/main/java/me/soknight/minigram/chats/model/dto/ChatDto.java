@@ -3,7 +3,8 @@ package me.soknight.minigram.chats.model.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import me.soknight.minigram.chats.model.attribute.ChatType;
 import me.soknight.minigram.chats.storage.model.ChatEntity;
-import me.soknight.minigram.chats.storage.model.ChatParticipantEntity;
+import me.soknight.minigram.chats.storage.model.ChatMemberEntity;
+import org.jspecify.annotations.NonNull;
 
 import java.time.Instant;
 import java.util.Comparator;
@@ -14,16 +15,16 @@ public record ChatDto(
         @JsonProperty("type") ChatType type,
         @JsonProperty("title") String title,
         @JsonProperty("owner_id") long ownerId,
-        @JsonProperty("participants") List<ChatParticipantDto> participants,
+        @JsonProperty("members") List<ChatMemberDto> members,
         @JsonProperty("last_message_id") Long lastMessageId,
         @JsonProperty("created_at") Instant createdAt,
         @JsonProperty("updated_at") Instant updatedAt
 ) {
 
-    public static ChatDto fromEntity(ChatEntity chat) {
-        List<ChatParticipantDto> participants = chat.getParticipants().stream()
-                .sorted(Comparator.comparing(ChatParticipantEntity::getJoinedAt).thenComparing(ChatParticipantEntity::getUserId))
-                .map(ChatParticipantDto::fromEntity)
+    public static @NonNull ChatDto fromEntity(@NonNull ChatEntity chat) {
+        var members = chat.getMembers().stream()
+                .sorted(Comparator.comparing(ChatMemberEntity::getJoinedAt).thenComparing(ChatMemberEntity::getUserId))
+                .map(ChatMemberDto::fromEntity)
                 .toList();
 
         return new ChatDto(
@@ -31,7 +32,7 @@ public record ChatDto(
                 chat.getType(),
                 chat.getTitle(),
                 chat.getOwnerId(),
-                participants,
+                members,
                 chat.getLastMessageId(),
                 chat.getCreatedAt(),
                 chat.getUpdatedAt()

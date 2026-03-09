@@ -7,11 +7,10 @@ import org.jspecify.annotations.NonNull;
 
 @Getter
 @AllArgsConstructor
-public enum ChatType {
+public enum ChatMemberRole {
 
-    SAVED   ("saved"),
-    DIRECT  ("direct"),
-    GROUP   ("group"),
+    OWNER   ("owner"),
+    MEMBER  ("member"),
     ;
 
     @JsonValue

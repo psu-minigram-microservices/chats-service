@@ -11,7 +11,7 @@ import java.util.List;
 public record CreateChatRequest(
         @NotNull ChatType type,
         @Size(max = 255) String title,
-        @JsonProperty("participant_ids") List<@NotNull @Positive Long> participantIds
+        @JsonProperty("member_ids") List<@NotNull @Positive Long> memberIds
 ) {
 
 }
