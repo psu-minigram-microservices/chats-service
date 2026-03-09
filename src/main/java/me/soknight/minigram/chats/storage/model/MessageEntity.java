@@ -45,4 +45,13 @@ public class MessageEntity {
         this.updatedAt = createdAt;
     }
 
+    public long getSenderId() {
+        return sender.getUserId();
+    }
+
+    public void updateContent(@NonNull String content) {
+        this.content = Objects.requireNonNull(content, "content");
+        this.updatedAt = Instant.now();
+    }
+
 }
