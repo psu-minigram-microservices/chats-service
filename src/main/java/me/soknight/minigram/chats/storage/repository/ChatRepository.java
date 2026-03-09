@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,11 +33,11 @@ public interface ChatRepository extends JpaRepository<ChatEntity, Long> {
     Optional<ChatEntity> findAccessibleById(long chatId, long userId);
 
     @Modifying
-    @Query("update ChatEntity chat set chat.lastMessageId = :messageId, chat.updatedAt = CURRENT_TIMESTAMP where chat.id = :chatId")
-    void updateLastMessageId(long chatId, @Nullable Long messageId);
+    @Query("update ChatEntity chat set chat.lastMessageId = :messageId, chat.updatedAt = :now where chat.id = :chatId")
+    void updateLastMessageId(long chatId, @Nullable Long messageId, Instant now);
 
     @Modifying
-    @Query("update ChatEntity chat set chat.updatedAt = CURRENT_TIMESTAMP where chat.id = :chatId")
-    void touch(long chatId);
+    @Query("update ChatEntity chat set chat.updatedAt = :now where chat.id = :chatId")
+    void touch(long chatId, Instant now);
 
 }

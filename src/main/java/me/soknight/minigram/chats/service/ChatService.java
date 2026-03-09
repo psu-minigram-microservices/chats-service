@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -69,7 +70,7 @@ public class ChatService {
 
         var member = new ChatMemberEntity(chat, invitedUserId, ChatMemberRole.MEMBER);
         chatMemberRepository.save(member);
-        chatRepository.touch(chatId);
+        chatRepository.touch(chatId, Instant.now());
 
         return ChatMemberDto.fromEntity(member);
     }
@@ -85,14 +86,14 @@ public class ChatService {
         validateChatCreation(request.type(), request.title(), memberIds);
 
         var title = normalizeTitle(request.title(), request.type());
-        var chat = chatRepository.save(new ChatEntity(request.type(), title, ownerId));
+        var chat = new ChatEntity(request.type(), title, ownerId);
 
-        chatMemberRepository.save(new ChatMemberEntity(chat, ownerId, ChatMemberRole.OWNER));
+        chat.getMembers().add(new ChatMemberEntity(chat, ownerId, ChatMemberRole.OWNER));
 
         for (long memberId : memberIds)
-            chatMemberRepository.save(new ChatMemberEntity(chat, memberId, ChatMemberRole.MEMBER));
+            chat.getMembers().add(new ChatMemberEntity(chat, memberId, ChatMemberRole.MEMBER));
 
-        return ChatDto.fromEntity(chatRepository.findAccessibleById(chat.getId(), ownerId).orElseThrow());
+        return ChatDto.fromEntity(chatRepository.save(chat));
     }
 
     @Transactional
@@ -105,8 +106,8 @@ public class ChatService {
             throw new ApiException(HttpStatus.CONFLICT, "owner_cannot_leave_chat", "Chat owner cannot leave their own chat");
 
         var member = getMember(chatId, userId);
-        chatMemberRepository.delete(member);
-        chatRepository.touch(chatId);
+        chat.getMembers().remove(member);
+        chatRepository.touch(chatId, Instant.now());
     }
 
     @Transactional
@@ -122,8 +123,8 @@ public class ChatService {
             throw new ApiException(HttpStatus.CONFLICT, "cannot_kick_self", "Use leave chat endpoint to remove yourself");
 
         var member = getMember(chatId, kickedUserId);
-        chatMemberRepository.delete(member);
-        chatRepository.touch(chatId);
+        chat.getMembers().remove(member);
+        chatRepository.touch(chatId, Instant.now());
     }
 
     @Transactional
