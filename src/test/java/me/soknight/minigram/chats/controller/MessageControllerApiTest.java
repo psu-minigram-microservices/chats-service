@@ -38,7 +38,7 @@ class MessageControllerApiTest {
     void sendMessage_returnsCreatedMessage() throws Exception {
         long chatId = createDirectChat();
 
-        mockMvc.perform(post("/chats/{id}/send", chatId)
+        mockMvc.perform(post("/api/v1/chats/{id}/send", chatId)
                         .with(authUser(1))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -56,7 +56,7 @@ class MessageControllerApiTest {
     void sendMessage_withBlankContent_returnsValidationError() throws Exception {
         long chatId = createDirectChat();
 
-        mockMvc.perform(post("/chats/{id}/send", chatId)
+        mockMvc.perform(post("/api/v1/chats/{id}/send", chatId)
                         .with(authUser(1))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -73,7 +73,7 @@ class MessageControllerApiTest {
         long chatId = createDirectChat();
         var message = messageService.sendMessage(1L, chatId, new SendMessageRequest("original"));
 
-        mockMvc.perform(patch("/messages/{id}", message.id())
+        mockMvc.perform(patch("/api/v1/messages/{id}", message.id())
                         .with(authUser(1))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -91,7 +91,7 @@ class MessageControllerApiTest {
         long chatId = createDirectChat();
         var message = messageService.sendMessage(1L, chatId, new SendMessageRequest("original"));
 
-        mockMvc.perform(patch("/messages/{id}", message.id())
+        mockMvc.perform(patch("/api/v1/messages/{id}", message.id())
                         .with(authUser(2))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -109,7 +109,7 @@ class MessageControllerApiTest {
         for (int i = 0; i < 5; i++)
             messageService.sendMessage(1L, chatId, new SendMessageRequest("message " + i));
 
-        mockMvc.perform(get("/chats/{id}/messages", chatId)
+        mockMvc.perform(get("/api/v1/chats/{id}/messages", chatId)
                         .with(authUser(1))
                         .queryParam("page", "0")
                         .queryParam("size", "3"))
@@ -120,7 +120,7 @@ class MessageControllerApiTest {
                 .andExpect(jsonPath("$.number").value(0))
                 .andExpect(jsonPath("$.size").value(3));
 
-        mockMvc.perform(get("/chats/{id}/messages", chatId)
+        mockMvc.perform(get("/api/v1/chats/{id}/messages", chatId)
                         .with(authUser(1))
                         .queryParam("page", "1")
                         .queryParam("size", "3"))
@@ -136,7 +136,7 @@ class MessageControllerApiTest {
         var first = messageService.sendMessage(1L, chatId, new SendMessageRequest("first"));
         var second = messageService.sendMessage(1L, chatId, new SendMessageRequest("second"));
 
-        mockMvc.perform(get("/chats/{id}/messages", chatId)
+        mockMvc.perform(get("/api/v1/chats/{id}/messages", chatId)
                         .with(authUser(1)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(second.id()))
@@ -148,11 +148,11 @@ class MessageControllerApiTest {
         long chatId = createDirectChat();
         var message = messageService.sendMessage(1L, chatId, new SendMessageRequest("to delete"));
 
-        mockMvc.perform(delete("/messages/{id}", message.id())
+        mockMvc.perform(delete("/api/v1/messages/{id}", message.id())
                         .with(authUser(1)))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/chats/{id}/messages", chatId)
+        mockMvc.perform(get("/api/v1/chats/{id}/messages", chatId)
                         .with(authUser(1)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(0));

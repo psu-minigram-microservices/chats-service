@@ -31,7 +31,7 @@ class ChatControllerApiTest {
 
     @Test
     void createChat_returnsCreatedChat() throws Exception {
-        mockMvc.perform(post("/chats")
+        mockMvc.perform(post("/api/v1/chats")
                         .with(authUser(1))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -52,7 +52,7 @@ class ChatControllerApiTest {
 
     @Test
     void createChat_withoutType_returnsValidationError() throws Exception {
-        mockMvc.perform(post("/chats")
+        mockMvc.perform(post("/api/v1/chats")
                         .with(authUser(1))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -70,12 +70,12 @@ class ChatControllerApiTest {
         chatService.createChat(2L, new CreateChatRequest(ChatType.SAVED, null, null));
         chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of(2L)));
 
-        mockMvc.perform(get("/chats").with(authUser(1)))
+        mockMvc.perform(get("/api/v1/chats").with(authUser(1)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.totalElements").value(2));
 
-        mockMvc.perform(get("/chats").with(authUser(3)))
+        mockMvc.perform(get("/api/v1/chats").with(authUser(3)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(0))
                 .andExpect(jsonPath("$.totalElements").value(0));
@@ -86,7 +86,7 @@ class ChatControllerApiTest {
         for (int i = 0; i < 5; i++)
             chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, "Chat " + i, List.of(2L)));
 
-        mockMvc.perform(get("/chats")
+        mockMvc.perform(get("/api/v1/chats")
                         .with(authUser(1))
                         .queryParam("page", "0")
                         .queryParam("size", "3"))
@@ -97,7 +97,7 @@ class ChatControllerApiTest {
                 .andExpect(jsonPath("$.number").value(0))
                 .andExpect(jsonPath("$.size").value(3));
 
-        mockMvc.perform(get("/chats")
+        mockMvc.perform(get("/api/v1/chats")
                         .with(authUser(1))
                         .queryParam("page", "1")
                         .queryParam("size", "3"))
@@ -111,7 +111,7 @@ class ChatControllerApiTest {
     void listChats_emptyPage_beyondLastPage() throws Exception {
         chatService.createChat(1L, new CreateChatRequest(ChatType.SAVED, null, null));
 
-        mockMvc.perform(get("/chats")
+        mockMvc.perform(get("/api/v1/chats")
                         .with(authUser(1))
                         .queryParam("page", "5")
                         .queryParam("size", "10"))
@@ -124,7 +124,7 @@ class ChatControllerApiTest {
     void inviteUser_toDirectChat_returnsConflict() throws Exception {
         var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of(2L)));
 
-        mockMvc.perform(post("/chats/{id}/invite", chat.id())
+        mockMvc.perform(post("/api/v1/chats/{id}/invite", chat.id())
                         .with(authUser(1))
                         .queryParam("user_id", "3"))
                 .andExpect(status().isConflict())
@@ -133,7 +133,7 @@ class ChatControllerApiTest {
 
     @Test
     void listChats_withNonNumericPrincipal_returnsUnauthorized() throws Exception {
-        mockMvc.perform(get("/chats").with(user("abc")))
+        mockMvc.perform(get("/api/v1/chats").with(user("abc")))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error_code").value("invalid_token_subject"));
     }
