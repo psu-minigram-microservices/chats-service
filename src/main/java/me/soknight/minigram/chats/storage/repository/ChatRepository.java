@@ -10,21 +10,21 @@ import java.util.Optional;
 
 public interface ChatRepository extends JpaRepository<ChatEntity, Long> {
 
-    @EntityGraph(attributePaths = "participants")
+    @EntityGraph(attributePaths = "members")
     @Query("""
             select distinct chat
             from ChatEntity chat
-            join chat.participants membership
+            join chat.members membership
             where membership.id.userId = :userId
             order by chat.updatedAt desc, chat.id desc
             """)
     List<ChatEntity> findAllByParticipantUserId(long userId);
 
-    @EntityGraph(attributePaths = "participants")
+    @EntityGraph(attributePaths = "members")
     @Query("""
             select distinct chat
             from ChatEntity chat
-            join chat.participants membership
+            join chat.members membership
             where chat.id = :chatId and membership.id.userId = :userId
             """)
     Optional<ChatEntity> findAccessibleById(long chatId, long userId);

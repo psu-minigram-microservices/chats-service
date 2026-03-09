@@ -3,8 +3,10 @@ package me.soknight.minigram.chats.storage.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.NonNull;
 
 import java.time.Instant;
+import java.util.Objects;
 
 @Getter
 @NoArgsConstructor
@@ -17,45 +19,30 @@ public class MessageEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "chat_id", nullable = false)
-    private ChatEntity chat;
+    private @NonNull ChatEntity chat;
 
-    @Column(name = "sender_id", nullable = false)
-    private long senderId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumns({
+            @JoinColumn(name = "chat_id", referencedColumnName = "chat_id", insertable = false, updatable = false),
+            @JoinColumn(name = "sender_id", referencedColumnName = "user_id")
+    })
+    private @NonNull ChatMemberEntity sender;
 
     @Column(name = "content", nullable = false, length = 4000)
-    private String content;
+    private @NonNull String content;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
+    private @NonNull Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
+    private @NonNull Instant updatedAt;
 
-    public MessageEntity(long senderId, String content) {
-        this.senderId = senderId;
-        this.content = content;
-    }
-
-    public void editContent(String content) {
-        this.content = content;
-    }
-
-    void attachTo(ChatEntity chat) {
-        this.chat = chat;
-    }
-
-    @PrePersist
-    void prePersist() {
-        Instant now = Instant.now();
-        if (createdAt == null) {
-            createdAt = now;
-        }
-        updatedAt = now;
-    }
-
-    @PreUpdate
-    void preUpdate() {
-        updatedAt = Instant.now();
+    public MessageEntity(@NonNull ChatMemberEntity sender, @NonNull String content) {
+        this.sender = Objects.requireNonNull(sender, "sender");
+        this.chat = sender.getChat();
+        this.content = Objects.requireNonNull(content, "content");
+        this.createdAt = Instant.now();
+        this.updatedAt = createdAt;
     }
 
 }
