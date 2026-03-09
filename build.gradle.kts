@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "me.soknight.minigram"
-version = "0.0.1-SNAPSHOT"
+version = "1.0"
 description = "chats-service"
 
 java {
@@ -28,11 +28,14 @@ dependencies {
     implementation(libs.bundles.spring.boot.starters)
     implementation(libs.flyway.database.postgresql)
     implementation(libs.springdoc.openapi.webmvc.ui)
-    compileOnly(libs.lombok)
-    runtimeOnly(libs.h2)
-    runtimeOnly(libs.postgresql)
+
     annotationProcessor(libs.lombok)
+
+    runtimeOnly(libs.postgresql)
+
     testImplementation(libs.bundles.spring.boot.test.starters)
+
+    testRuntimeOnly(libs.h2)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 

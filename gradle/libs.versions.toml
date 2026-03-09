@@ -1,6 +1,5 @@
 [versions]
-flyway = "11.8.0"
-lombok = "1.18.38"
+lombok = "1.18.42"
 spring-boot = "4.0.3"
 spring-dependency-management = "1.1.7"
 springdoc = "3.0.2"
@@ -31,10 +30,10 @@ springdoc-openapi-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starte
 lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 
 # --- runtime ---
-h2 = { module = "com.h2database:h2" }
 postgresql = { module = "org.postgresql:postgresql" }
 
 # --- test runtime ---
+h2 = { module = "com.h2database:h2" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 
 [bundles]
