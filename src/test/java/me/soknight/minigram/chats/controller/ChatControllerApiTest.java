@@ -1,0 +1,104 @@
+package me.soknight.minigram.chats.controller;
+
+import me.soknight.minigram.chats.model.attribute.ChatType;
+import me.soknight.minigram.chats.model.dto.CreateChatRequest;
+import me.soknight.minigram.chats.service.ChatService;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+import static org.hamcrest.Matchers.hasItem;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@Transactional
+class ChatControllerApiTest {
+
+    @Autowired MockMvc mockMvc;
+    @Autowired ChatService chatService;
+
+    @Test
+    void createChat_returnsCreatedChat() throws Exception {
+        mockMvc.perform(post("/chats")
+                        .with(authUser(1))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "type": "group",
+                                  "title": "  Team Chat  ",
+                                  "member_ids": [2, 3]
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.type").value("group"))
+                .andExpect(jsonPath("$.title").value("Team Chat"))
+                .andExpect(jsonPath("$.owner_id").value(1))
+                .andExpect(jsonPath("$.members[*].user_id", hasItem(1)))
+                .andExpect(jsonPath("$.members[*].user_id", hasItem(2)))
+                .andExpect(jsonPath("$.members[*].user_id", hasItem(3)));
+    }
+
+    @Test
+    void createChat_withoutType_returnsValidationError() throws Exception {
+        mockMvc.perform(post("/chats")
+                        .with(authUser(1))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "Any"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error_code").value("incorrect_field_value"));
+    }
+
+    @Test
+    void listChats_returnsOnlyUserChats() throws Exception {
+        chatService.createChat(1L, new CreateChatRequest(ChatType.SAVED, null, null));
+        chatService.createChat(2L, new CreateChatRequest(ChatType.SAVED, null, null));
+        chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of(2L)));
+
+        mockMvc.perform(get("/chats").with(authUser(1)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+
+        mockMvc.perform(get("/chats").with(authUser(3)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void inviteUser_toDirectChat_returnsConflict() throws Exception {
+        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of(2L)));
+
+        mockMvc.perform(post("/chats/{id}/invite", chat.id())
+                        .with(authUser(1))
+                        .queryParam("user_id", "3"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error_code").value("chat_invite_not_supported"));
+    }
+
+    @Test
+    void listChats_withNonNumericPrincipal_returnsUnauthorized() throws Exception {
+        mockMvc.perform(get("/chats").with(user("abc")))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code").value("invalid_token_subject"));
+    }
+
+    private RequestPostProcessor authUser(long userId) {
+        return user(Long.toString(userId));
+    }
+
+}
