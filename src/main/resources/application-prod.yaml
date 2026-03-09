@@ -1,0 +1,18 @@
+spring:
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+
+logging:
+  level:
+    root: WARN
+    '[me.soknight.minigram.chats]': INFO
+    '[org.springframework.security]': WARN
+    '[org.springframework.web]': WARN
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
