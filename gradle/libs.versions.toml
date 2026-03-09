@@ -30,10 +30,10 @@ springdoc-openapi-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starte
 lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 
 # --- runtime ---
+h2 = { module = "com.h2database:h2" }
 postgresql = { module = "org.postgresql:postgresql" }
 
 # --- test runtime ---
-h2 = { module = "com.h2database:h2" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 
 [bundles]

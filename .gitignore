@@ -2,6 +2,7 @@
 .claude/
 .gradle/
 build/
+/data/
 out/
 *.jar
 *.iml
