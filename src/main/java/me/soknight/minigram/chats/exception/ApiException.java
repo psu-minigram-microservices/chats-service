@@ -1,6 +1,8 @@
 package me.soknight.minigram.chats.exception;
 
 import me.soknight.minigram.chats.model.ErrorModel;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 
@@ -8,30 +10,41 @@ import java.text.MessageFormat;
 
 public class ApiException extends GenericErrorException {
 
-    private Object payload;
+    private @Nullable Object payload;
 
-    public ApiException(String errorCode, String errorMessage, Object... args) {
+    public ApiException(
+            @NonNull String errorCode,
+            @NonNull String errorMessage,
+            @Nullable Object... args
+    ) {
         this(HttpStatus.BAD_REQUEST, errorCode, errorMessage, args);
     }
 
-    public ApiException(HttpStatusCode statusCode, String errorCode, String errorMessage, Object... args) {
+    public ApiException(
+            @NonNull HttpStatusCode statusCode,
+            @NonNull String errorCode,
+            @NonNull String errorMessage,
+            @Nullable Object... args
+    ) {
         super(statusCode, errorCode, formatMessage(errorMessage, args));
     }
 
-    public ApiException withPayload(Object payload) {
+    public @NonNull ApiException withPayload(@Nullable Object payload) {
         this.payload = payload;
         return this;
     }
 
-    private static String formatMessage(String errorMessage, Object... args) {
-        if (errorMessage == null || errorMessage.isEmpty() || args == null || args.length == 0)
-            return errorMessage;
-
+    private static @Nullable String formatMessage(
+            @Nullable String errorMessage,
+            @Nullable Object... args
+    ) {
+        if (errorMessage == null || errorMessage.isEmpty()) return errorMessage;
+        if (args == null || args.length == 0) return errorMessage;
         return MessageFormat.format(errorMessage, args);
     }
 
     @Override
-    public ErrorModel constructModel() {
+    public @NonNull ErrorModel constructModel() {
         return new ErrorModel(errorCode, errorMessage, payload);
     }
 

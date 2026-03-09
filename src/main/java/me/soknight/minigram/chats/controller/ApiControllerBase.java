@@ -8,16 +8,16 @@ import org.springframework.security.core.Authentication;
 public class ApiControllerBase {
 
     protected long extractUserId(@Nullable Authentication authentication) throws ApiException {
-        if (authentication == null || authentication.getName() == null || authentication.getName().isBlank())
+        var name = authentication != null ? authentication.getName() : null;
+        if (name == null || name.isBlank())
             throw new ApiException(
                     HttpStatus.UNAUTHORIZED,
                     "unauthorized",
                     "Missing authenticated user"
             );
 
-
         try {
-            return Long.parseLong(authentication.getName());
+            return Long.parseLong(name);
         } catch (NumberFormatException ex) {
             throw new ApiException(
                     HttpStatus.UNAUTHORIZED,
