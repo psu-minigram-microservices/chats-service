@@ -10,13 +10,13 @@ import java.util.Objects;
 
 @Getter
 @NoArgsConstructor
-@Entity @Table(name = "messages")
-public class MessageEntity {
+@Entity @Table(name = "chat_messages")
+public class ChatMessageEntity {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private long id;
+    @EmbeddedId
+    private @NonNull ChatMessageId id;
 
+    @MapsId("chatId")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "chat_id", nullable = false)
     private @NonNull ChatEntity chat;
@@ -40,13 +40,22 @@ public class MessageEntity {
     @Column(name = "updated_at", nullable = false)
     private @NonNull Instant updatedAt;
 
-    public MessageEntity(@NonNull ChatMemberEntity sender, @NonNull String content) {
+    public ChatMessageEntity(@NonNull ChatMessageId id, @NonNull ChatMemberEntity sender, @NonNull String content) {
+        this.id = Objects.requireNonNull(id, "id");
         this.sender = Objects.requireNonNull(sender, "sender");
         this.chat = sender.getChat();
         this.senderId = sender.getUserId();
         this.content = Objects.requireNonNull(content, "content");
         this.createdAt = Instant.now();
         this.updatedAt = createdAt;
+    }
+
+    public long getChatId() {
+        return id.chatId();
+    }
+
+    public long getMessageId() {
+        return id.messageId();
     }
 
     public void updateContent(@NonNull String content) {

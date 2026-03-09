@@ -2,7 +2,7 @@ package me.soknight.minigram.chats.model.websocket;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import me.soknight.minigram.chats.model.dto.ChatMemberDto;
-import me.soknight.minigram.chats.model.dto.MessageDto;
+import me.soknight.minigram.chats.model.dto.ChatMessageDto;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -20,11 +20,11 @@ public record ChatEvent(
         MEMBER_LEFT
     }
 
-    public static @NonNull ChatEvent messageSent(long chatId, @NonNull MessageDto message) {
+    public static @NonNull ChatEvent messageSent(long chatId, @NonNull ChatMessageDto message) {
         return new ChatEvent(Type.MESSAGE_SENT, chatId, message);
     }
 
-    public static @NonNull ChatEvent messageEdited(long chatId, @NonNull MessageDto message) {
+    public static @NonNull ChatEvent messageEdited(long chatId, @NonNull ChatMessageDto message) {
         return new ChatEvent(Type.MESSAGE_EDITED, chatId, message);
     }
 
