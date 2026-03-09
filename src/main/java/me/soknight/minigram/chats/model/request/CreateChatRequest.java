@@ -1,4 +1,4 @@
-package me.soknight.minigram.chats.model.dto;
+package me.soknight.minigram.chats.model.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;

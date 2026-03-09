@@ -1,7 +1,7 @@
 package me.soknight.minigram.chats.controller;
 
 import me.soknight.minigram.chats.model.attribute.ChatType;
-import me.soknight.minigram.chats.model.dto.CreateChatRequest;
+import me.soknight.minigram.chats.model.request.CreateChatRequest;
 import me.soknight.minigram.chats.service.ChatService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

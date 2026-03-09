@@ -6,13 +6,13 @@ import me.soknight.minigram.chats.model.attribute.ChatMemberRole;
 import me.soknight.minigram.chats.model.attribute.ChatType;
 import me.soknight.minigram.chats.model.dto.ChatDto;
 import me.soknight.minigram.chats.model.dto.ChatMemberDto;
-import me.soknight.minigram.chats.model.dto.CreateChatRequest;
+import me.soknight.minigram.chats.model.request.CreateChatRequest;
 import me.soknight.minigram.chats.model.dto.MessageDto;
-import me.soknight.minigram.chats.storage.model.ChatEntity;
-import me.soknight.minigram.chats.storage.model.ChatMemberEntity;
-import me.soknight.minigram.chats.storage.repository.ChatMemberRepository;
-import me.soknight.minigram.chats.storage.repository.ChatRepository;
-import me.soknight.minigram.chats.storage.repository.MessageRepository;
+import me.soknight.minigram.chats.model.entity.ChatEntity;
+import me.soknight.minigram.chats.model.entity.ChatMemberEntity;
+import me.soknight.minigram.chats.repository.ChatMemberRepository;
+import me.soknight.minigram.chats.repository.ChatRepository;
+import me.soknight.minigram.chats.repository.MessageRepository;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 @Service

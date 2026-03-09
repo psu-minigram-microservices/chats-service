@@ -7,10 +7,10 @@ import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoCon
 @SpringBootApplication(exclude = {
         UserDetailsServiceAutoConfiguration.class,  // user details aren't needed
 })
-public class ChatsServiceApplication {
+public class ServiceApplication {
 
     static void main(String[] args) {
-        SpringApplication.run(ChatsServiceApplication.class, args);
+        SpringApplication.run(ServiceApplication.class, args);
     }
 
 }

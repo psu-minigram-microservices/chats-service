@@ -3,7 +3,7 @@ package me.soknight.minigram.chats.exception;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import lombok.Getter;
-import me.soknight.minigram.chats.model.ErrorModel;
+import me.soknight.minigram.chats.model.dto.ErrorDto;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
@@ -77,8 +77,8 @@ public class GenericErrorException extends Exception {
         throw GenericErrorException.fromConstraintViolation(first);
     }
 
-    public @NonNull ErrorModel constructModel() {
-        return new ErrorModel(errorCode, errorMessage);
+    public @NonNull ErrorDto constructModel() {
+        return new ErrorDto(errorCode, errorMessage);
     }
 
 }

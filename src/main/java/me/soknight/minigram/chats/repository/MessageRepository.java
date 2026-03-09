@@ -1,6 +1,6 @@
-package me.soknight.minigram.chats.storage.repository;
+package me.soknight.minigram.chats.repository;
 
-import me.soknight.minigram.chats.storage.model.MessageEntity;
+import me.soknight.minigram.chats.model.entity.MessageEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;

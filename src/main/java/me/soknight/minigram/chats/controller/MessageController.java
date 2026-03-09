@@ -4,10 +4,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import me.soknight.minigram.chats.exception.ApiException;
-import me.soknight.minigram.chats.model.dto.EditMessageRequest;
+import me.soknight.minigram.chats.model.request.EditMessageRequest;
 import me.soknight.minigram.chats.model.dto.MessageDto;
-import me.soknight.minigram.chats.model.dto.SendMessageRequest;
+import me.soknight.minigram.chats.model.request.SendMessageRequest;
 import me.soknight.minigram.chats.service.MessageService;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -26,7 +27,7 @@ public class MessageController extends ApiControllerBase {
     public ResponseEntity<MessageDto> sendMessage(
             @PathVariable("id") @Positive long chatId,
             @Valid @RequestBody SendMessageRequest request,
-            Authentication authentication
+            @Nullable Authentication authentication
     ) throws ApiException {
         MessageDto message = messageService.sendMessage(extractUserId(authentication), chatId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(message);
@@ -36,7 +37,7 @@ public class MessageController extends ApiControllerBase {
     public MessageDto editMessage(
             @PathVariable("id") @Positive long messageId,
             @Valid @RequestBody EditMessageRequest request,
-            Authentication authentication
+            @Nullable Authentication authentication
     ) throws ApiException {
         return messageService.editMessage(extractUserId(authentication), messageId, request);
     }
@@ -44,7 +45,7 @@ public class MessageController extends ApiControllerBase {
     @DeleteMapping("/messages/{id}")
     public ResponseEntity<Void> deleteMessage(
             @PathVariable("id") @Positive long messageId,
-            Authentication authentication
+            @Nullable Authentication authentication
     ) throws ApiException {
         messageService.deleteMessage(extractUserId(authentication), messageId);
         return ResponseEntity.noContent().build();

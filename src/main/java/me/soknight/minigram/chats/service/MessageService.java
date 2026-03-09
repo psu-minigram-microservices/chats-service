@@ -2,14 +2,14 @@ package me.soknight.minigram.chats.service;
 
 import lombok.AllArgsConstructor;
 import me.soknight.minigram.chats.exception.ApiException;
-import me.soknight.minigram.chats.model.dto.EditMessageRequest;
+import me.soknight.minigram.chats.model.request.EditMessageRequest;
 import me.soknight.minigram.chats.model.dto.MessageDto;
-import me.soknight.minigram.chats.model.dto.SendMessageRequest;
-import me.soknight.minigram.chats.storage.model.ChatMemberEntity;
-import me.soknight.minigram.chats.storage.model.MessageEntity;
-import me.soknight.minigram.chats.storage.repository.ChatMemberRepository;
-import me.soknight.minigram.chats.storage.repository.ChatRepository;
-import me.soknight.minigram.chats.storage.repository.MessageRepository;
+import me.soknight.minigram.chats.model.request.SendMessageRequest;
+import me.soknight.minigram.chats.model.entity.ChatMemberEntity;
+import me.soknight.minigram.chats.model.entity.MessageEntity;
+import me.soknight.minigram.chats.repository.ChatMemberRepository;
+import me.soknight.minigram.chats.repository.ChatRepository;
+import me.soknight.minigram.chats.repository.MessageRepository;
 import org.jspecify.annotations.NonNull;
 
 import java.time.Instant;

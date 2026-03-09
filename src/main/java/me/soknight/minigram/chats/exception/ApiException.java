@@ -1,6 +1,6 @@
 package me.soknight.minigram.chats.exception;
 
-import me.soknight.minigram.chats.model.ErrorModel;
+import me.soknight.minigram.chats.model.dto.ErrorDto;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
@@ -44,8 +44,8 @@ public class ApiException extends GenericErrorException {
     }
 
     @Override
-    public @NonNull ErrorModel constructModel() {
-        return new ErrorModel(errorCode, errorMessage, payload);
+    public @NonNull ErrorDto constructModel() {
+        return new ErrorDto(errorCode, errorMessage, payload);
     }
 
 }

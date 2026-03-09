@@ -2,8 +2,8 @@ package me.soknight.minigram.chats.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import me.soknight.minigram.chats.model.attribute.ChatType;
-import me.soknight.minigram.chats.storage.model.ChatEntity;
-import me.soknight.minigram.chats.storage.model.ChatMemberEntity;
+import me.soknight.minigram.chats.model.entity.ChatEntity;
+import me.soknight.minigram.chats.model.entity.ChatMemberEntity;
 import org.jspecify.annotations.NonNull;
 
 import java.time.Instant;

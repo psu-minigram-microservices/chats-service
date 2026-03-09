@@ -1,7 +1,7 @@
 package me.soknight.minigram.chats.exception;
 
 import jakarta.validation.ConstraintViolationException;
-import me.soknight.minigram.chats.model.ErrorModel;
+import me.soknight.minigram.chats.model.dto.ErrorDto;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,12 +13,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(GenericErrorException.class)
-    public @NonNull ResponseEntity<ErrorModel> handleGenericError(@NonNull GenericErrorException ex) {
+    public @NonNull ResponseEntity<ErrorDto> handleGenericError(@NonNull GenericErrorException ex) {
         return ResponseEntity.status(ex.getStatusCode()).body(ex.constructModel());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public @NonNull ResponseEntity<ErrorModel> handleValidationError(@NonNull MethodArgumentNotValidException ex) {
+    public @NonNull ResponseEntity<ErrorDto> handleValidationError(@NonNull MethodArgumentNotValidException ex) {
         var firstError = ex.getBindingResult().getFieldErrors().stream().findFirst().orElse(null);
         var error = firstError == null
                 ? new GenericErrorException(HttpStatus.BAD_REQUEST, "incorrect_field_value", "Request body validation failed")
@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public @NonNull ResponseEntity<ErrorModel> handleConstraintViolation(@NonNull ConstraintViolationException ex) {
+    public @NonNull ResponseEntity<ErrorDto> handleConstraintViolation(@NonNull ConstraintViolationException ex) {
         var error = ex.getConstraintViolations().stream().findFirst()
                 .map(GenericErrorException::fromConstraintViolation)
                 .orElseGet(() -> new GenericErrorException(HttpStatus.BAD_REQUEST, "incorrect_field_value", "Request validation failed"));
@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public @NonNull ResponseEntity<ErrorModel> handleUnexpectedError(@NonNull Exception ex) {
+    public @NonNull ResponseEntity<ErrorDto> handleUnexpectedError(@NonNull Exception ex) {
         var error = new GenericErrorException(ex);
         return ResponseEntity.status(error.getStatusCode()).body(error.constructModel());
     }

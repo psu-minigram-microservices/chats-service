@@ -2,8 +2,8 @@ package me.soknight.minigram.chats.controller;
 
 import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.attribute.ChatType;
-import me.soknight.minigram.chats.model.dto.CreateChatRequest;
-import me.soknight.minigram.chats.model.dto.SendMessageRequest;
+import me.soknight.minigram.chats.model.request.CreateChatRequest;
+import me.soknight.minigram.chats.model.request.SendMessageRequest;
 import me.soknight.minigram.chats.service.ChatService;
 import me.soknight.minigram.chats.service.MessageService;
 import org.junit.jupiter.api.Test;

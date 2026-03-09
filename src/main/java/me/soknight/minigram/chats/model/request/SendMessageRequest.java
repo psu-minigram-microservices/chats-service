@@ -1,4 +1,4 @@
-package me.soknight.minigram.chats.model.dto;
+package me.soknight.minigram.chats.model.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

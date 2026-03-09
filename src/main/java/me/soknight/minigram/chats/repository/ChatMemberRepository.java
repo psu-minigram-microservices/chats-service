@@ -1,7 +1,7 @@
-package me.soknight.minigram.chats.storage.repository;
+package me.soknight.minigram.chats.repository;
 
-import me.soknight.minigram.chats.storage.model.ChatMemberEntity;
-import me.soknight.minigram.chats.storage.model.ChatMemberId;
+import me.soknight.minigram.chats.model.entity.ChatMemberEntity;
+import me.soknight.minigram.chats.model.entity.ChatMemberId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

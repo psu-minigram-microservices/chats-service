@@ -1,6 +1,6 @@
-package me.soknight.minigram.chats.storage.repository;
+package me.soknight.minigram.chats.repository;
 
-import me.soknight.minigram.chats.storage.model.ChatEntity;
+import me.soknight.minigram.chats.model.entity.ChatEntity;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

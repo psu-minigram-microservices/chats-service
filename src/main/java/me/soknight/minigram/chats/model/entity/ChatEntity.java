@@ -1,4 +1,4 @@
-package me.soknight.minigram.chats.storage.model;
+package me.soknight.minigram.chats.model.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

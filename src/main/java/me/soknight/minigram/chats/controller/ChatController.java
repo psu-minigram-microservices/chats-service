@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.dto.ChatDto;
 import me.soknight.minigram.chats.model.dto.ChatMemberDto;
-import me.soknight.minigram.chats.model.dto.CreateChatRequest;
+import me.soknight.minigram.chats.model.request.CreateChatRequest;
 import me.soknight.minigram.chats.model.dto.MessageDto;
 import me.soknight.minigram.chats.service.ChatService;
 import org.jspecify.annotations.Nullable;
