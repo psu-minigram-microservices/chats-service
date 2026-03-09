@@ -24,9 +24,12 @@ public class MessageEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumns({
             @JoinColumn(name = "chat_id", referencedColumnName = "chat_id", insertable = false, updatable = false),
-            @JoinColumn(name = "sender_id", referencedColumnName = "user_id")
+            @JoinColumn(name = "sender_id", referencedColumnName = "user_id", insertable = false, updatable = false)
     })
     private @NonNull ChatMemberEntity sender;
+
+    @Column(name = "sender_id", nullable = false, insertable = true, updatable = false)
+    private long senderId;
 
     @Column(name = "content", nullable = false, length = 4000)
     private @NonNull String content;
@@ -40,13 +43,10 @@ public class MessageEntity {
     public MessageEntity(@NonNull ChatMemberEntity sender, @NonNull String content) {
         this.sender = Objects.requireNonNull(sender, "sender");
         this.chat = sender.getChat();
+        this.senderId = sender.getUserId();
         this.content = Objects.requireNonNull(content, "content");
         this.createdAt = Instant.now();
         this.updatedAt = createdAt;
-    }
-
-    public long getSenderId() {
-        return sender.getUserId();
     }
 
     public void updateContent(@NonNull String content) {

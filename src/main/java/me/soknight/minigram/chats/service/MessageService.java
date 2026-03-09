@@ -11,6 +11,8 @@ import me.soknight.minigram.chats.storage.repository.ChatMemberRepository;
 import me.soknight.minigram.chats.storage.repository.ChatRepository;
 import me.soknight.minigram.chats.storage.repository.MessageRepository;
 import org.jspecify.annotations.NonNull;
+
+import java.time.Instant;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +34,7 @@ public class MessageService {
         var sender = getMember(chatId, senderId);
 
         var message = messageRepository.save(new MessageEntity(sender, request.content().trim()));
-        chatRepository.updateLastMessageId(chatId, message.getId());
+        chatRepository.updateLastMessageId(chatId, message.getId(), Instant.now());
 
         return MessageDto.fromEntity(message);
     }
@@ -58,7 +60,7 @@ public class MessageService {
         messageRepository.delete(message);
 
         var newLastMessageId = messageRepository.findLastIdByChatIdExcluding(chatId, messageId).orElse(null);
-        chatRepository.updateLastMessageId(chatId, newLastMessageId);
+        chatRepository.updateLastMessageId(chatId, newLastMessageId, Instant.now());
     }
 
     private @NonNull ChatMemberEntity getMember(long chatId, long userId) throws ApiException {
