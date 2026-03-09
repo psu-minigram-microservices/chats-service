@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.dto.ChatDto;
-import me.soknight.minigram.chats.model.dto.ChatParticipantDto;
+import me.soknight.minigram.chats.model.dto.ChatMemberDto;
 import me.soknight.minigram.chats.model.dto.CreateChatRequest;
 import me.soknight.minigram.chats.model.dto.MessageDto;
 import me.soknight.minigram.chats.service.ChatService;
@@ -50,7 +50,7 @@ public class ChatController extends ApiControllerBase {
     }
 
     @PostMapping("/{id}/invite")
-    public ChatParticipantDto inviteUser(
+    public ChatMemberDto inviteUser(
             @PathVariable("id") @Positive long chatId,
             @RequestParam("user_id") @Positive long invitedUserId,
             @Nullable Authentication authentication
