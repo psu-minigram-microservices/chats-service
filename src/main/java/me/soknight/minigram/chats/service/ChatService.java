@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -28,18 +29,18 @@ public class ChatService {
     private final @NonNull ChatRepository chatRepository;
 
     @Transactional(readOnly = true)
-    public @NonNull Page<ChatDto> getChats(long userId, @NonNull Pageable pageable) {
+    public @NonNull Page<ChatDto> getChats(UUID userId, @NonNull Pageable pageable) {
         return chatRepository.findAllByMemberUserId(userId, pageable).map(ChatDto::fromEntity);
     }
 
     @Transactional(readOnly = true)
-    public @NonNull ChatDto getChat(long userId, long chatId) throws ApiException {
+    public @NonNull ChatDto getChat(UUID userId, long chatId) throws ApiException {
         return ChatDto.fromEntity(getAccessibleChat(chatId, userId));
     }
 
     @Transactional
-    public @NonNull ChatDto createChat(long ownerId, @NonNull CreateChatRequest request) throws ApiException {
-        Set<Long> memberIds = new LinkedHashSet<>();
+    public @NonNull ChatDto createChat(UUID ownerId, @NonNull CreateChatRequest request) throws ApiException {
+        Set<UUID> memberIds = new LinkedHashSet<>();
         if (request.memberIds() != null)
             memberIds.addAll(request.memberIds());
 
@@ -52,17 +53,17 @@ public class ChatService {
 
         chat.getMembers().add(new ChatMemberEntity(chat, ownerId, ChatMemberRole.OWNER));
 
-        for (long memberId : memberIds)
+        for (UUID memberId : memberIds)
             chat.getMembers().add(new ChatMemberEntity(chat, memberId, ChatMemberRole.MEMBER));
 
         return ChatDto.fromEntity(chatRepository.save(chat));
     }
 
     @Transactional
-    public @NonNull ChatDto editChat(long userId, long chatId, @NonNull EditChatRequest request) throws ApiException {
+    public @NonNull ChatDto editChat(UUID userId, long chatId, @NonNull EditChatRequest request) throws ApiException {
         var chat = getAccessibleChat(chatId, userId);
 
-        if (chat.getOwnerId() != userId)
+        if (!chat.getOwnerId().equals(userId))
             throw new ApiException(HttpStatus.FORBIDDEN, "access_denied", "Only chat owner can edit the chat");
 
         if (!chat.isGroup())
@@ -77,10 +78,10 @@ public class ChatService {
     }
 
     @Transactional
-    public @NonNull ChatDto deleteChat(long userId, long chatId) throws ApiException {
+    public @NonNull ChatDto deleteChat(UUID userId, long chatId) throws ApiException {
         var chat = getAccessibleChat(chatId, userId);
 
-        if (chat.getOwnerId() != userId)
+        if (!chat.getOwnerId().equals(userId))
             throw new ApiException(HttpStatus.FORBIDDEN, "access_denied", "Only chat owner can delete the chat");
 
         var dto = ChatDto.fromEntity(chat);
@@ -88,7 +89,7 @@ public class ChatService {
         return dto;
     }
 
-    @NonNull ChatEntity getAccessibleChat(long chatId, long userId) throws ApiException {
+    @NonNull ChatEntity getAccessibleChat(long chatId, UUID userId) throws ApiException {
         return chatRepository.findAccessibleById(chatId, userId)
                 .orElseThrow(() -> new ApiException(
                         HttpStatus.NOT_FOUND,
@@ -101,7 +102,7 @@ public class ChatService {
     private void validateChatCreation(
             @NonNull ChatType type,
             @Nullable String title,
-            @NonNull Set<Long> memberIds
+            @NonNull Set<UUID> memberIds
     ) throws ApiException {
         switch (type) {
             case SAVED -> {

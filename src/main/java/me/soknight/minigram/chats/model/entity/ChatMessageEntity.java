@@ -7,6 +7,7 @@ import org.jspecify.annotations.NonNull;
 
 import java.time.Instant;
 import java.util.Objects;
+import java.util.UUID;
 
 @Getter
 @NoArgsConstructor
@@ -29,7 +30,7 @@ public class ChatMessageEntity {
     private @NonNull ChatMemberEntity sender;
 
     @Column(name = "sender_id", nullable = false, insertable = true, updatable = false)
-    private long senderId;
+    private UUID senderId;
 
     @Column(name = "content", nullable = false, length = 4000)
     private @NonNull String content;

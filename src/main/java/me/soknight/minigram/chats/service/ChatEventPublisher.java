@@ -7,6 +7,8 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @AllArgsConstructor
 public class ChatEventPublisher {
@@ -18,9 +20,9 @@ public class ChatEventPublisher {
 
     public void publish(long chatId, @NonNull ChatEvent event) {
         var memberUserIds = chatMemberRepository.findUserIdsByChatId(chatId);
-        for (long userId : memberUserIds) {
+        for (UUID userId : memberUserIds) {
             messagingTemplate.convertAndSendToUser(
-                    Long.toString(userId),
+                    userId.toString(),
                     USER_EVENTS_DESTINATION,
                     event
             );

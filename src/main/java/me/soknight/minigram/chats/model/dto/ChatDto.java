@@ -9,12 +9,13 @@ import org.jspecify.annotations.NonNull;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 public record ChatDto(
         @JsonProperty("id") long id,
         @JsonProperty("type") ChatType type,
         @JsonProperty("title") String title,
-        @JsonProperty("owner_id") long ownerId,
+        @JsonProperty("owner_id") UUID ownerId,
         @JsonProperty("members") List<ChatMemberDto> members,
         @JsonProperty("last_message_id") Long lastMessageId,
         @JsonProperty("created_at") Instant createdAt,

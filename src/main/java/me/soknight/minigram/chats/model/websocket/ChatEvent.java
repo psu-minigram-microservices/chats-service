@@ -6,6 +6,8 @@ import me.soknight.minigram.chats.model.dto.ChatMessageDto;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import java.util.UUID;
+
 public record ChatEvent(
         @JsonProperty("type") @NonNull Type type,
         @JsonProperty("chat_id") long chatId,
@@ -36,7 +38,7 @@ public record ChatEvent(
         return new ChatEvent(Type.MEMBER_JOINED, chatId, member);
     }
 
-    public static @NonNull ChatEvent memberLeft(long chatId, long userId) {
+    public static @NonNull ChatEvent memberLeft(long chatId, UUID userId) {
         return new ChatEvent(Type.MEMBER_LEFT, chatId, userId);
     }
 

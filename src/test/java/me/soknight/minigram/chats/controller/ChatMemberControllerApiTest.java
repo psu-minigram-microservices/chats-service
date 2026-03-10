@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -25,36 +26,40 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class ChatMemberControllerApiTest {
 
+    private static final UUID USER_1 = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final UUID USER_2 = UUID.fromString("00000000-0000-0000-0000-000000000002");
+    private static final UUID USER_3 = UUID.fromString("00000000-0000-0000-0000-000000000003");
+
     @Autowired MockMvc mockMvc;
     @Autowired ChatService chatService;
 
     @Test
     void inviteUser_toGroupChat_returnsMember() throws Exception {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, "Test", List.of(2L)));
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
 
-        mockMvc.perform(post("/api/v1/chats/{chatId}/members/{userId}", chat.id(), 3L)
-                        .with(authUser(1)))
+        mockMvc.perform(post("/api/v1/chats/{chatId}/members/{userId}", chat.id(), USER_3)
+                        .with(authUser(USER_1)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.user_id").value(3))
+                .andExpect(jsonPath("$.user_id").value(USER_3.toString()))
                 .andExpect(jsonPath("$.role").value("member"));
     }
 
     @Test
     void inviteUser_toDirectChat_returnsConflict() throws Exception {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of(2L)));
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
 
-        mockMvc.perform(post("/api/v1/chats/{chatId}/members/{userId}", chat.id(), 3L)
-                        .with(authUser(1)))
+        mockMvc.perform(post("/api/v1/chats/{chatId}/members/{userId}", chat.id(), USER_3)
+                        .with(authUser(USER_1)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error_code").value("chat_invite_not_supported"));
     }
 
     @Test
     void getMembers_returnsMembersPage() throws Exception {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, "Test", List.of(2L, 3L)));
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2, USER_3)));
 
         mockMvc.perform(get("/api/v1/chats/{chatId}/members", chat.id())
-                        .with(authUser(1)))
+                        .with(authUser(USER_1)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(3))
                 .andExpect(jsonPath("$.totalElements").value(3));
@@ -62,68 +67,68 @@ class ChatMemberControllerApiTest {
 
     @Test
     void getMemberMe_returnsCurrentUser() throws Exception {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, "Test", List.of(2L)));
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
 
         mockMvc.perform(get("/api/v1/chats/{chatId}/members/me", chat.id())
-                        .with(authUser(1)))
+                        .with(authUser(USER_1)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.user_id").value(1))
+                .andExpect(jsonPath("$.user_id").value(USER_1.toString()))
                 .andExpect(jsonPath("$.role").value("owner"));
     }
 
     @Test
     void getMemberById_returnsMember() throws Exception {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, "Test", List.of(2L)));
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
 
-        mockMvc.perform(get("/api/v1/chats/{chatId}/members/{memberId}", chat.id(), 2L)
-                        .with(authUser(1)))
+        mockMvc.perform(get("/api/v1/chats/{chatId}/members/{memberId}", chat.id(), USER_2)
+                        .with(authUser(USER_1)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.user_id").value(2))
+                .andExpect(jsonPath("$.user_id").value(USER_2.toString()))
                 .andExpect(jsonPath("$.role").value("member"));
     }
 
     @Test
     void leaveChat_returnsMember() throws Exception {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, "Test", List.of(2L)));
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
 
         mockMvc.perform(delete("/api/v1/chats/{chatId}/members/me", chat.id())
-                        .with(authUser(2)))
+                        .with(authUser(USER_2)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.user_id").value(2));
+                .andExpect(jsonPath("$.user_id").value(USER_2.toString()));
     }
 
     @Test
     void leaveChat_owner_returnsConflict() throws Exception {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, "Test", List.of(2L)));
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
 
         mockMvc.perform(delete("/api/v1/chats/{chatId}/members/me", chat.id())
-                        .with(authUser(1)))
+                        .with(authUser(USER_1)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error_code").value("owner_cannot_leave_chat"));
     }
 
     @Test
     void kickUser_returnsMember() throws Exception {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, "Test", List.of(2L, 3L)));
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2, USER_3)));
 
-        mockMvc.perform(delete("/api/v1/chats/{chatId}/members/{memberId}", chat.id(), 2L)
-                        .with(authUser(1)))
+        mockMvc.perform(delete("/api/v1/chats/{chatId}/members/{memberId}", chat.id(), USER_2)
+                        .with(authUser(USER_1)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.user_id").value(2));
+                .andExpect(jsonPath("$.user_id").value(USER_2.toString()));
     }
 
     @Test
     void kickUser_notOwner_returnsForbidden() throws Exception {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, "Test", List.of(2L, 3L)));
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2, USER_3)));
 
-        mockMvc.perform(delete("/api/v1/chats/{chatId}/members/{memberId}", chat.id(), 3L)
-                        .with(authUser(2)))
+        mockMvc.perform(delete("/api/v1/chats/{chatId}/members/{memberId}", chat.id(), USER_3)
+                        .with(authUser(USER_2)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error_code").value("access_denied"));
     }
 
-    private RequestPostProcessor authUser(long userId) {
-        return user(Long.toString(userId));
+    private RequestPostProcessor authUser(UUID userId) {
+        return user(userId.toString());
     }
 
 }

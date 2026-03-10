@@ -33,6 +33,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +42,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class WebSocketIntegrationTest {
+
+    private static final UUID USER_1 = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final UUID USER_2 = UUID.fromString("00000000-0000-0000-0000-000000000002");
+    private static final UUID USER_3 = UUID.fromString("00000000-0000-0000-0000-000000000003");
 
     @LocalServerPort int port;
     @Value("${server.jwt.secret}") String jwtSecret;
@@ -60,7 +65,7 @@ class WebSocketIntegrationTest {
         stompClient = new WebSocketStompClient(new StandardWebSocketClient());
         stompClient.setMessageConverter(new JacksonJsonMessageConverter());
 
-        session = connectAsUser(1L);
+        session = connectAsUser(USER_1);
     }
 
     @AfterEach
@@ -75,10 +80,10 @@ class WebSocketIntegrationTest {
 
     @Test
     void sendMessage_receivesMessageSentEvent() throws Exception {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of(2L)));
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
         subscribeToEvents();
 
-        messageService.sendMessage(1L, chat.id(), new SendMessageRequest("hello"));
+        messageService.sendMessage(USER_1, chat.id(), new SendMessageRequest("hello"));
 
         var event = pollEvent();
         assertThat(event).isNotNull();
@@ -88,11 +93,11 @@ class WebSocketIntegrationTest {
 
     @Test
     void editMessage_receivesMessageEditedEvent() throws Exception {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of(2L)));
-        var message = messageService.sendMessage(1L, chat.id(), new SendMessageRequest("original"));
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
+        var message = messageService.sendMessage(USER_1, chat.id(), new SendMessageRequest("original"));
         subscribeToEvents();
 
-        messageService.editMessage(1L, chat.id(), message.id(), new EditMessageRequest("updated"));
+        messageService.editMessage(USER_1, chat.id(), message.id(), new EditMessageRequest("updated"));
 
         var event = pollEvent();
         assertThat(event).isNotNull();
@@ -101,11 +106,11 @@ class WebSocketIntegrationTest {
 
     @Test
     void deleteMessage_receivesMessageDeletedEvent() throws Exception {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of(2L)));
-        var message = messageService.sendMessage(1L, chat.id(), new SendMessageRequest("to delete"));
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
+        var message = messageService.sendMessage(USER_1, chat.id(), new SendMessageRequest("to delete"));
         subscribeToEvents();
 
-        messageService.deleteMessage(1L, chat.id(), message.id());
+        messageService.deleteMessage(USER_1, chat.id(), message.id());
 
         var event = pollEvent();
         assertThat(event).isNotNull();
@@ -115,10 +120,10 @@ class WebSocketIntegrationTest {
 
     @Test
     void inviteUser_receivesMemberJoinedEvent() throws Exception {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, "Test", List.of(2L)));
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
         subscribeToEvents();
 
-        chatMemberService.inviteUser(1L, chat.id(), 3L);
+        chatMemberService.inviteUser(USER_1, chat.id(), USER_3);
 
         var event = pollEvent();
         assertThat(event).isNotNull();
@@ -128,10 +133,10 @@ class WebSocketIntegrationTest {
 
     @Test
     void leaveChat_receivesMemberLeftEvent() throws Exception {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, "Test", List.of(2L)));
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
         subscribeToEvents();
 
-        chatMemberService.leaveChat(2L, chat.id());
+        chatMemberService.leaveChat(USER_2, chat.id());
 
         var event = pollEvent();
         assertThat(event).isNotNull();
@@ -140,10 +145,10 @@ class WebSocketIntegrationTest {
 
     @Test
     void kickUser_receivesMemberLeftEvent() throws Exception {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, "Test", List.of(2L, 3L)));
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2, USER_3)));
         subscribeToEvents();
 
-        chatMemberService.kickUser(1L, chat.id(), 2L);
+        chatMemberService.kickUser(USER_1, chat.id(), USER_2);
 
         var event = pollEvent();
         assertThat(event).isNotNull();
@@ -153,10 +158,10 @@ class WebSocketIntegrationTest {
     @Test
     void nonMember_doesNotReceiveEvent() throws Exception {
         // user 1 is connected, but not a member of this chat
-        var chat = chatService.createChat(2L, new CreateChatRequest(ChatType.DIRECT, null, List.of(3L)));
+        var chat = chatService.createChat(USER_2, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_3)));
         subscribeToEvents();
 
-        messageService.sendMessage(2L, chat.id(), new SendMessageRequest("secret"));
+        messageService.sendMessage(USER_2, chat.id(), new SendMessageRequest("secret"));
 
         var event = events.poll(2, TimeUnit.SECONDS);
         assertThat(event).isNull();
@@ -173,7 +178,7 @@ class WebSocketIntegrationTest {
 
     // --- helpers ---
 
-    private StompSession connectAsUser(long userId) throws Exception {
+    private StompSession connectAsUser(UUID userId) throws Exception {
         var token = generateJwt(userId);
         var url = "ws://localhost:" + port + "/ws?token=" + token;
 
@@ -202,12 +207,12 @@ class WebSocketIntegrationTest {
         return events.poll(5, TimeUnit.SECONDS);
     }
 
-    private String generateJwt(long userId) {
+    private String generateJwt(UUID userId) {
         var keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
         var key = new SecretKeySpec(keyBytes, "HmacSHA256");
 
         return Jwts.builder()
-                .subject(Long.toString(userId))
+                .subject(userId.toString())
                 .issuedAt(new Date())
                 .expiration(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
                 .signWith(key)

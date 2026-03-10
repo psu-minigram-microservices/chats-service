@@ -16,6 +16,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @Validated
 @RestController
 @RequestMapping("/api/v1/chats")
@@ -39,7 +41,7 @@ public class ChatMemberController extends ApiControllerBase {
     @PostMapping("/{chat_id}/members/{user_id}")
     public @NonNull ChatMemberDto inviteUser(
             @PathVariable("chat_id") @Positive long chatId,
-            @PathVariable("user_id") @Positive long userId,
+            @PathVariable("user_id") UUID userId,
             @Nullable Authentication authentication
     ) throws ApiException {
         return chatMemberService.inviteUser(extractUserId(authentication), chatId, userId);
@@ -52,14 +54,14 @@ public class ChatMemberController extends ApiControllerBase {
             @PathVariable("chat_id") @Positive long chatId,
             @Nullable Authentication authentication
     ) throws ApiException {
-        long actorUserId = extractUserId(authentication);
+        UUID actorUserId = extractUserId(authentication);
         return chatMemberService.getMember(actorUserId, chatId, actorUserId);
     }
 
     @GetMapping("/{chat_id}/members/{member_id}")
     public @NonNull ChatMemberDto getMemberById(
             @PathVariable("chat_id") @Positive long chatId,
-            @PathVariable("member_id") @Positive long memberId,
+            @PathVariable("member_id") UUID memberId,
             @Nullable Authentication authentication
     ) throws ApiException {
         return chatMemberService.getMember(extractUserId(authentication), chatId, memberId);
@@ -76,7 +78,7 @@ public class ChatMemberController extends ApiControllerBase {
     @DeleteMapping("/{chat_id}/members/{member_id}")
     public @NonNull ChatMemberDto kickUser(
             @PathVariable("chat_id") @Positive long chatId,
-            @PathVariable("member_id") @Positive long memberId,
+            @PathVariable("member_id") UUID memberId,
             @Nullable Authentication authentication
     ) throws ApiException {
         return chatMemberService.kickUser(extractUserId(authentication), chatId, memberId);

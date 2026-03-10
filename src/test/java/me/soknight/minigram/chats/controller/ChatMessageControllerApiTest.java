@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -30,6 +31,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class ChatMessageControllerApiTest {
 
+    private static final UUID USER_1 = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final UUID USER_2 = UUID.fromString("00000000-0000-0000-0000-000000000002");
+
     @Autowired MockMvc mockMvc;
     @Autowired ChatService chatService;
     @Autowired ChatMessageService messageService;
@@ -39,7 +43,7 @@ class ChatMessageControllerApiTest {
         long chatId = createDirectChat();
 
         mockMvc.perform(post("/api/v1/chats/{chatId}/messages", chatId)
-                        .with(authUser(1))
+                        .with(authUser(USER_1))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -48,7 +52,7 @@ class ChatMessageControllerApiTest {
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.content").value("hello"))
-                .andExpect(jsonPath("$.sender.user_id").value(1))
+                .andExpect(jsonPath("$.sender.user_id").value(USER_1.toString()))
                 .andExpect(jsonPath("$.chat.id").value(chatId));
     }
 
@@ -57,7 +61,7 @@ class ChatMessageControllerApiTest {
         long chatId = createDirectChat();
 
         mockMvc.perform(post("/api/v1/chats/{chatId}/messages", chatId)
-                        .with(authUser(1))
+                        .with(authUser(USER_1))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -71,10 +75,10 @@ class ChatMessageControllerApiTest {
     @Test
     void editMessage_returnsUpdatedMessage() throws Exception {
         long chatId = createDirectChat();
-        var message = messageService.sendMessage(1L, chatId, new SendMessageRequest("original"));
+        var message = messageService.sendMessage(USER_1, chatId, new SendMessageRequest("original"));
 
         mockMvc.perform(patch("/api/v1/chats/{chatId}/messages/{messageId}", chatId, message.id())
-                        .with(authUser(1))
+                        .with(authUser(USER_1))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -89,10 +93,10 @@ class ChatMessageControllerApiTest {
     @Test
     void editMessage_byAnotherUser_returnsForbidden() throws Exception {
         long chatId = createDirectChat();
-        var message = messageService.sendMessage(1L, chatId, new SendMessageRequest("original"));
+        var message = messageService.sendMessage(USER_1, chatId, new SendMessageRequest("original"));
 
         mockMvc.perform(patch("/api/v1/chats/{chatId}/messages/{messageId}", chatId, message.id())
-                        .with(authUser(2))
+                        .with(authUser(USER_2))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -107,10 +111,10 @@ class ChatMessageControllerApiTest {
     void getMessages_paginationWithCustomPageSize() throws Exception {
         long chatId = createDirectChat();
         for (int i = 0; i < 5; i++)
-            messageService.sendMessage(1L, chatId, new SendMessageRequest("message " + i));
+            messageService.sendMessage(USER_1, chatId, new SendMessageRequest("message " + i));
 
         mockMvc.perform(get("/api/v1/chats/{chatId}/messages", chatId)
-                        .with(authUser(1))
+                        .with(authUser(USER_1))
                         .queryParam("page", "0")
                         .queryParam("size", "3"))
                 .andExpect(status().isOk())
@@ -121,7 +125,7 @@ class ChatMessageControllerApiTest {
                 .andExpect(jsonPath("$.size").value(3));
 
         mockMvc.perform(get("/api/v1/chats/{chatId}/messages", chatId)
-                        .with(authUser(1))
+                        .with(authUser(USER_1))
                         .queryParam("page", "1")
                         .queryParam("size", "3"))
                 .andExpect(status().isOk())
@@ -133,11 +137,11 @@ class ChatMessageControllerApiTest {
     @Test
     void getMessages_defaultSortIsNewestFirst() throws Exception {
         long chatId = createDirectChat();
-        var first = messageService.sendMessage(1L, chatId, new SendMessageRequest("first"));
-        var second = messageService.sendMessage(1L, chatId, new SendMessageRequest("second"));
+        var first = messageService.sendMessage(USER_1, chatId, new SendMessageRequest("first"));
+        var second = messageService.sendMessage(USER_1, chatId, new SendMessageRequest("second"));
 
         mockMvc.perform(get("/api/v1/chats/{chatId}/messages", chatId)
-                        .with(authUser(1)))
+                        .with(authUser(USER_1)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(second.id()))
                 .andExpect(jsonPath("$.content[1].id").value(first.id()));
@@ -146,25 +150,25 @@ class ChatMessageControllerApiTest {
     @Test
     void deleteMessage_returnsDeletedMessage() throws Exception {
         long chatId = createDirectChat();
-        var message = messageService.sendMessage(1L, chatId, new SendMessageRequest("to delete"));
+        var message = messageService.sendMessage(USER_1, chatId, new SendMessageRequest("to delete"));
 
         mockMvc.perform(delete("/api/v1/chats/{chatId}/messages/{messageId}", chatId, message.id())
-                        .with(authUser(1)))
+                        .with(authUser(USER_1)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(message.id()));
 
         mockMvc.perform(get("/api/v1/chats/{chatId}/messages", chatId)
-                        .with(authUser(1)))
+                        .with(authUser(USER_1)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(0));
     }
 
     private long createDirectChat() throws ApiException {
-        return chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of(2L))).id();
+        return chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2))).id();
     }
 
-    private RequestPostProcessor authUser(long userId) {
-        return user(Long.toString(userId));
+    private RequestPostProcessor authUser(UUID userId) {
+        return user(userId.toString());
     }
 
 }

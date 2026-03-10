@@ -13,6 +13,7 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -26,34 +27,38 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class ChatControllerApiTest {
 
+    private static final UUID USER_1 = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final UUID USER_2 = UUID.fromString("00000000-0000-0000-0000-000000000002");
+    private static final UUID USER_3 = UUID.fromString("00000000-0000-0000-0000-000000000003");
+
     @Autowired MockMvc mockMvc;
     @Autowired ChatService chatService;
 
     @Test
     void createChat_returnsCreatedChat() throws Exception {
         mockMvc.perform(post("/api/v1/chats")
-                        .with(authUser(1))
+                        .with(authUser(USER_1))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
                                   "type": "group",
                                   "title": "  Team Chat  ",
-                                  "member_ids": [2, 3]
+                                  "member_ids": ["%s", "%s"]
                                 }
-                                """))
+                                """.formatted(USER_2, USER_3)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.type").value("group"))
                 .andExpect(jsonPath("$.title").value("Team Chat"))
-                .andExpect(jsonPath("$.owner_id").value(1))
-                .andExpect(jsonPath("$.members[*].user_id", hasItem(1)))
-                .andExpect(jsonPath("$.members[*].user_id", hasItem(2)))
-                .andExpect(jsonPath("$.members[*].user_id", hasItem(3)));
+                .andExpect(jsonPath("$.owner_id").value(USER_1.toString()))
+                .andExpect(jsonPath("$.members[*].user_id", hasItem(USER_1.toString())))
+                .andExpect(jsonPath("$.members[*].user_id", hasItem(USER_2.toString())))
+                .andExpect(jsonPath("$.members[*].user_id", hasItem(USER_3.toString())));
     }
 
     @Test
     void createChat_withoutType_returnsValidationError() throws Exception {
         mockMvc.perform(post("/api/v1/chats")
-                        .with(authUser(1))
+                        .with(authUser(USER_1))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -66,16 +71,16 @@ class ChatControllerApiTest {
 
     @Test
     void listChats_returnsOnlyUserChats() throws Exception {
-        chatService.createChat(1L, new CreateChatRequest(ChatType.SAVED, null, null));
-        chatService.createChat(2L, new CreateChatRequest(ChatType.SAVED, null, null));
-        chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of(2L)));
+        chatService.createChat(USER_1, new CreateChatRequest(ChatType.SAVED, null, null));
+        chatService.createChat(USER_2, new CreateChatRequest(ChatType.SAVED, null, null));
+        chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
 
-        mockMvc.perform(get("/api/v1/chats").with(authUser(1)))
+        mockMvc.perform(get("/api/v1/chats").with(authUser(USER_1)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.totalElements").value(2));
 
-        mockMvc.perform(get("/api/v1/chats").with(authUser(3)))
+        mockMvc.perform(get("/api/v1/chats").with(authUser(USER_3)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(0))
                 .andExpect(jsonPath("$.totalElements").value(0));
@@ -84,10 +89,10 @@ class ChatControllerApiTest {
     @Test
     void listChats_paginationWithCustomPageSize() throws Exception {
         for (int i = 0; i < 5; i++)
-            chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, "Chat " + i, List.of(2L)));
+            chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Chat " + i, List.of(USER_2)));
 
         mockMvc.perform(get("/api/v1/chats")
-                        .with(authUser(1))
+                        .with(authUser(USER_1))
                         .queryParam("page", "0")
                         .queryParam("size", "3"))
                 .andExpect(status().isOk())
@@ -98,7 +103,7 @@ class ChatControllerApiTest {
                 .andExpect(jsonPath("$.size").value(3));
 
         mockMvc.perform(get("/api/v1/chats")
-                        .with(authUser(1))
+                        .with(authUser(USER_1))
                         .queryParam("page", "1")
                         .queryParam("size", "3"))
                 .andExpect(status().isOk())
@@ -109,10 +114,10 @@ class ChatControllerApiTest {
 
     @Test
     void listChats_emptyPage_beyondLastPage() throws Exception {
-        chatService.createChat(1L, new CreateChatRequest(ChatType.SAVED, null, null));
+        chatService.createChat(USER_1, new CreateChatRequest(ChatType.SAVED, null, null));
 
         mockMvc.perform(get("/api/v1/chats")
-                        .with(authUser(1))
+                        .with(authUser(USER_1))
                         .queryParam("page", "5")
                         .queryParam("size", "10"))
                 .andExpect(status().isOk())
@@ -121,14 +126,14 @@ class ChatControllerApiTest {
     }
 
     @Test
-    void listChats_withNonNumericPrincipal_returnsUnauthorized() throws Exception {
+    void listChats_withNonUuidPrincipal_returnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/v1/chats").with(user("abc")))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error_code").value("invalid_token_subject"));
     }
 
-    private RequestPostProcessor authUser(long userId) {
-        return user(Long.toString(userId));
+    private RequestPostProcessor authUser(UUID userId) {
+        return user(userId.toString());
     }
 
 }

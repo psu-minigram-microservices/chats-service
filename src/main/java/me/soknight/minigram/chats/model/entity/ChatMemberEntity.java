@@ -9,6 +9,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 import java.util.Objects;
+import java.util.UUID;
 
 @Getter
 @NoArgsConstructor
@@ -30,7 +31,7 @@ public class ChatMemberEntity {
     @Column(name = "joined_at", nullable = false, updatable = false)
     private @NonNull Instant joinedAt;
 
-    public ChatMemberEntity(@NonNull ChatEntity chat, long userId, @Nullable ChatMemberRole role) {
+    public ChatMemberEntity(@NonNull ChatEntity chat, UUID userId, @Nullable ChatMemberRole role) {
         this.chat = Objects.requireNonNull(chat, "chat");
         this.id = new ChatMemberId(chat.getId(), userId);
         this.role = role != null ? role : ChatMemberRole.MEMBER;
@@ -41,7 +42,7 @@ public class ChatMemberEntity {
         return id.chatId();
     }
 
-    public long getUserId() {
+    public UUID getUserId() {
         return id.userId();
     }
 
