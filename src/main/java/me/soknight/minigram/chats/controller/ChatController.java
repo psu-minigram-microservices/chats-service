@@ -30,56 +30,56 @@ public class ChatController extends ApiControllerBase {
     // -------------- /chats -------------------------------------------------------------------------------------------
 
     @GetMapping
-    public Page<ChatDto> getChats(
+    public @NonNull Page<ChatDto> getChats(
             @PageableDefault(sort = {"updatedAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable,
             @Nullable Authentication authentication
     ) throws ApiException {
-        return null;
+        return chatService.getChats(extractUserId(authentication), pageable);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ChatDto createChat(
+    public @NonNull ChatDto createChat(
             @Valid @RequestBody CreateChatRequest request,
             @Nullable Authentication authentication
     ) throws ApiException {
-        return null;
+        return chatService.createChat(extractUserId(authentication), request);
     }
 
     // -------------- /chats/{id} --------------------------------------------------------------------------------------
 
     @GetMapping("/{chat_id}")
-    public ChatDto getChatById(
+    public @NonNull ChatDto getChatById(
             @PathVariable("chat_id") @Positive long chatId,
             @Nullable Authentication authentication
     ) throws ApiException {
-        return null;
+        return chatService.getChat(extractUserId(authentication), chatId);
     }
 
     @PatchMapping("/{chat_id}")
-    public ChatDto editChatById(
+    public @NonNull ChatDto editChatById(
             @PathVariable("chat_id") @Positive long chatId,
             @Valid @RequestBody EditChatRequest request,
             @Nullable Authentication authentication
     ) throws ApiException {
-        return null;
+        return chatService.editChat(extractUserId(authentication), chatId, request);
     }
 
     @PutMapping("/{chat_id}")
-    public ChatDto replaceChatById(
+    public @NonNull ChatDto replaceChatById(
             @PathVariable("chat_id") @Positive long chatId,
             @Valid @RequestBody EditChatRequest request,
             @Nullable Authentication authentication
     ) throws ApiException {
-        return null;
+        return chatService.editChat(extractUserId(authentication), chatId, request);
     }
 
     @DeleteMapping("/{chat_id}")
-    public ChatDto deleteChatById(
+    public @NonNull ChatDto deleteChatById(
             @PathVariable("chat_id") @Positive long chatId,
             @Nullable Authentication authentication
     ) throws ApiException {
-        return null;
+        return chatService.deleteChat(extractUserId(authentication), chatId);
     }
 
 }

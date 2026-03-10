@@ -13,13 +13,24 @@ import java.util.Optional;
 public interface ChatMessageRepository extends JpaRepository<ChatMessageEntity, ChatMessageId> {
 
     @EntityGraph(attributePaths = {"chat", "sender"})
-    @Query("select message from ChatMessageEntity message where message.id.chatId = :chatId")
+    @Query("""
+            select chat_message
+            from ChatMessageEntity chat_message
+            where chat_message.id.chatId = :chatId
+            """)
     Page<ChatMessageEntity> findByChatId(long chatId, Pageable pageable);
 
     @Query("""
-            select message.id.messageId from ChatMessageEntity message
-            where message.id.chatId = :chatId and message.id.messageId <> :excludedMessageId
-            order by message.createdAt desc, message.id.messageId desc
+            select chat_message
+            from ChatMessageEntity chat_message
+            where chat_message.chat.id = :chatId and chat_message.id.messageId = :messageId
+            """)
+    Optional<ChatMessageEntity> findById(long chatId, long messageId);
+
+    @Query("""
+            select chat_message.id.messageId from ChatMessageEntity chat_message
+            where chat_message.id.chatId = :chatId and chat_message.id.messageId <> :excludedMessageId
+            order by chat_message.createdAt desc, chat_message.id.messageId desc
             limit 1
             """)
     Optional<Long> findLastMessageIdByChatIdExcluding(long chatId, long excludedMessageId);

@@ -57,6 +57,11 @@ public class ChatEntity {
         this.updatedAt = Instant.now();
     }
 
+    public void updateTitle(@Nullable String title) {
+        this.title = title;
+        this.updatedAt = Instant.now();
+    }
+
     public boolean isSaved() {
         return type == ChatType.SAVED;
     }
