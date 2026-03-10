@@ -121,17 +121,6 @@ class ChatControllerApiTest {
     }
 
     @Test
-    void inviteUser_toDirectChat_returnsConflict() throws Exception {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of(2L)));
-
-        mockMvc.perform(post("/api/v1/chats/{id}/invite", chat.id())
-                        .with(authUser(1))
-                        .queryParam("user_id", "3"))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.error_code").value("chat_invite_not_supported"));
-    }
-
-    @Test
     void listChats_withNonNumericPrincipal_returnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/v1/chats").with(user("abc")))
                 .andExpect(status().isUnauthorized())

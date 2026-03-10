@@ -8,10 +8,10 @@ import me.soknight.minigram.chats.model.request.CreateChatRequest;
 import me.soknight.minigram.chats.model.request.EditMessageRequest;
 import me.soknight.minigram.chats.model.request.SendMessageRequest;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -21,9 +21,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Transactional
-class MessageServiceTest {
+class ChatMessageServiceTest {
 
-    @Autowired MessageService messageService;
+    @Autowired ChatMessageService messageService;
     @Autowired ChatService chatService;
     @Autowired EntityManager em;
 
@@ -93,7 +93,7 @@ class MessageServiceTest {
         var message = messageService.sendMessage(1L, chat.id(), new SendMessageRequest("original"));
         flushAndClear();
 
-        var edited = messageService.editMessage(1L, message.id(), new EditMessageRequest("updated"));
+        var edited = messageService.editMessage(1L, chat.id(), message.id(), new EditMessageRequest("updated"));
 
         assertThat(edited.content()).isEqualTo("updated");
         assertThat(edited.id()).isEqualTo(message.id());
@@ -105,13 +105,15 @@ class MessageServiceTest {
         var message = messageService.sendMessage(1L, chat.id(), new SendMessageRequest("original"));
         flushAndClear();
 
-        assertThatThrownBy(() -> messageService.editMessage(2L, message.id(), new EditMessageRequest("updated")))
+        assertThatThrownBy(() -> messageService.editMessage(2L, chat.id(), message.id(), new EditMessageRequest("updated")))
                 .isInstanceOf(ApiException.class);
     }
 
     @Test
-    void editMessage_notFound_throws() {
-        assertThatThrownBy(() -> messageService.editMessage(1L, 999L, new EditMessageRequest("updated")))
+    void editMessage_notFound_throws() throws ApiException {
+        var chat = createDirectChat();
+
+        assertThatThrownBy(() -> messageService.editMessage(1L, chat.id(), 999L, new EditMessageRequest("updated")))
                 .isInstanceOf(ApiException.class);
     }
 
@@ -123,10 +125,10 @@ class MessageServiceTest {
         var message = messageService.sendMessage(1L, chat.id(), new SendMessageRequest("to delete"));
         flushAndClear();
 
-        messageService.deleteMessage(1L, message.id());
+        messageService.deleteMessage(1L, chat.id(), message.id());
         flushAndClear();
 
-        var messages = chatService.getMessages(1L, chat.id(), PageRequest.of(0, 50, Sort.by(Sort.Direction.DESC, "createdAt", "id")));
+        var messages = messageService.getMessages(1L, chat.id(), PageRequest.of(0, 50, Sort.by(Sort.Direction.DESC, "createdAt", "id")));
         assertThat(messages.getContent()).isEmpty();
     }
 
@@ -138,7 +140,7 @@ class MessageServiceTest {
         var msg2 = messageService.sendMessage(1L, chat.id(), new SendMessageRequest("second"));
         flushAndClear();
 
-        messageService.deleteMessage(1L, msg2.id());
+        messageService.deleteMessage(1L, chat.id(), msg2.id());
         flushAndClear();
 
         var updatedChat = chatService.getChat(1L, chat.id());
@@ -151,7 +153,7 @@ class MessageServiceTest {
         var message = messageService.sendMessage(1L, chat.id(), new SendMessageRequest("only message"));
         flushAndClear();
 
-        messageService.deleteMessage(1L, message.id());
+        messageService.deleteMessage(1L, chat.id(), message.id());
         flushAndClear();
 
         var updatedChat = chatService.getChat(1L, chat.id());
@@ -164,13 +166,15 @@ class MessageServiceTest {
         var message = messageService.sendMessage(1L, chat.id(), new SendMessageRequest("original"));
         flushAndClear();
 
-        assertThatThrownBy(() -> messageService.deleteMessage(2L, message.id()))
+        assertThatThrownBy(() -> messageService.deleteMessage(2L, chat.id(), message.id()))
                 .isInstanceOf(ApiException.class);
     }
 
     @Test
-    void deleteMessage_notFound_throws() {
-        assertThatThrownBy(() -> messageService.deleteMessage(1L, 999L))
+    void deleteMessage_notFound_throws() throws ApiException {
+        var chat = createDirectChat();
+
+        assertThatThrownBy(() -> messageService.deleteMessage(1L, chat.id(), 999L))
                 .isInstanceOf(ApiException.class);
     }
 
