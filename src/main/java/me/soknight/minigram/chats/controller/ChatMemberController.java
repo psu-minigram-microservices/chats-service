@@ -28,7 +28,7 @@ public class ChatMemberController extends ApiControllerBase {
     @GetMapping("/{chat_id}/members")
     public @NonNull Page<ChatMemberDto> getMembers(
             @PathVariable("chat_id") @Positive long chatId,
-            @PageableDefault(size = 50, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable,
+            @PageableDefault(size = 50, sort = {"joinedAt", "id.userId"}, direction = Sort.Direction.DESC) Pageable pageable,
             @Nullable Authentication authentication
     ) throws ApiException {
         return chatMemberService.getMembers(extractUserId(authentication), chatId, pageable);

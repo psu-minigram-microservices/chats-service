@@ -32,7 +32,7 @@ public class ChatMessageController extends ApiControllerBase {
     @GetMapping("/{chat_id}/messages")
     public @NonNull Page<ChatMessageDto> getMessages(
             @PathVariable("chat_id") @Positive long chatId,
-            @PageableDefault(size = 50, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable,
+            @PageableDefault(size = 50, sort = {"createdAt", "id.messageId"}, direction = Sort.Direction.DESC) Pageable pageable,
             @Nullable Authentication authentication
     ) throws ApiException {
         return chatMessageService.getMessages(extractUserId(authentication), chatId, pageable);
