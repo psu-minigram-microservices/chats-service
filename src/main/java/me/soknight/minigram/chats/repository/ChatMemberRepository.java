@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface ChatMemberRepository extends JpaRepository<ChatMemberEntity, ChatMemberId> {
 
@@ -17,7 +18,7 @@ public interface ChatMemberRepository extends JpaRepository<ChatMemberEntity, Ch
             from ChatMemberEntity chat_member
             where chat_member.chat.id = :chatId
             """)
-    List<Long> findUserIdsByChatId(long chatId);
+    List<UUID> findUserIdsByChatId(long chatId);
 
     @Query("""
             select chat_member
@@ -31,13 +32,13 @@ public interface ChatMemberRepository extends JpaRepository<ChatMemberEntity, Ch
             from ChatMemberEntity chat_member
             where chat_member.chat.id = :chatId and chat_member.id.userId = :userId
             """)
-    Optional<ChatMemberEntity> findById(long chatId, long userId);
+    Optional<ChatMemberEntity> findById(long chatId, UUID userId);
 
     @Query("""
             select count(chat_member) > 0
             from ChatMemberEntity chat_member
             where chat_member.chat.id = :chatId and chat_member.id.userId = :userId
             """)
-    boolean existsById(long chatId, long userId);
+    boolean existsById(long chatId, UUID userId);
 
 }

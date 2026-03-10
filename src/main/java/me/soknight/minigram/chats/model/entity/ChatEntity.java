@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Getter
 @NoArgsConstructor
@@ -29,7 +30,7 @@ public class ChatEntity {
     private @Nullable String title;
 
     @Column(name = "owner_id", nullable = false)
-    private long ownerId;
+    private UUID ownerId;
 
     @Column(name = "message_sequence", nullable = false)
     private long messageSequence;
@@ -49,7 +50,7 @@ public class ChatEntity {
     @OneToMany(mappedBy = "chat", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private final @NonNull List<ChatMessageEntity> messages = new ArrayList<>();
 
-    public ChatEntity(@NonNull ChatType type, @Nullable String title, long ownerId) {
+    public ChatEntity(@NonNull ChatType type, @Nullable String title, UUID ownerId) {
         this.type = Objects.requireNonNull(type, "type");
         this.title = title;
         this.ownerId = ownerId;

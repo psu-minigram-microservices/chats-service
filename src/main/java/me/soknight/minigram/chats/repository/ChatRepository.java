@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.time.Instant;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface ChatRepository extends JpaRepository<ChatEntity, Long> {
 
@@ -27,7 +28,7 @@ public interface ChatRepository extends JpaRepository<ChatEntity, Long> {
             join chat.members membership
             where membership.id.userId = :userId
             """)
-    Page<ChatEntity> findAllByMemberUserId(long userId, Pageable pageable);
+    Page<ChatEntity> findAllByMemberUserId(UUID userId, Pageable pageable);
 
     @EntityGraph(attributePaths = "members")
     @Query("""
@@ -36,7 +37,7 @@ public interface ChatRepository extends JpaRepository<ChatEntity, Long> {
             join chat.members membership
             where chat.id = :chatId and membership.id.userId = :userId
             """)
-    Optional<ChatEntity> findAccessibleById(long chatId, long userId);
+    Optional<ChatEntity> findAccessibleById(long chatId, UUID userId);
 
     @Modifying
     @Query("""

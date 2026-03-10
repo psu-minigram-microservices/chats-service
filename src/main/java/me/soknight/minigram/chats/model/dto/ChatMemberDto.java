@@ -6,9 +6,10 @@ import me.soknight.minigram.chats.model.entity.ChatMemberEntity;
 import org.jspecify.annotations.NonNull;
 
 import java.time.Instant;
+import java.util.UUID;
 
 public record ChatMemberDto(
-        @JsonProperty("user_id") long userId,
+        @JsonProperty("user_id") UUID userId,
         @JsonProperty("role") ChatMemberRole role,
         @JsonProperty("joined_at") Instant joinedAt
 ) {

@@ -14,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -21,6 +22,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @SpringBootTest
 @Transactional
 class ChatServiceTest {
+
+    private static final UUID USER_1 = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final UUID USER_2 = UUID.fromString("00000000-0000-0000-0000-000000000002");
+    private static final UUID USER_3 = UUID.fromString("00000000-0000-0000-0000-000000000003");
+    private static final UUID UNKNOWN_USER = UUID.fromString("00000000-0000-0000-0000-000000000999");
 
     @Autowired ChatService chatService;
     @Autowired EntityManager em;
@@ -34,25 +40,25 @@ class ChatServiceTest {
 
     @Test
     void createSavedChat() throws ApiException {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.SAVED, null, null));
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.SAVED, null, null));
 
         assertThat(chat.type()).isEqualTo(ChatType.SAVED);
         assertThat(chat.title()).isNull();
-        assertThat(chat.ownerId()).isEqualTo(1L);
+        assertThat(chat.ownerId()).isEqualTo(USER_1);
         assertThat(chat.members()).hasSize(1);
-        assertThat(chat.members().getFirst().userId()).isEqualTo(1L);
+        assertThat(chat.members().getFirst().userId()).isEqualTo(USER_1);
         assertThat(chat.members().getFirst().role()).isEqualTo(ChatMemberRole.OWNER);
     }
 
     @Test
     void createSavedChat_withMembers_throws() {
-        assertThatThrownBy(() -> chatService.createChat(1L, new CreateChatRequest(ChatType.SAVED, null, List.of(2L))))
+        assertThatThrownBy(() -> chatService.createChat(USER_1, new CreateChatRequest(ChatType.SAVED, null, List.of(USER_2))))
                 .isInstanceOf(ApiException.class);
     }
 
     @Test
     void createDirectChat() throws ApiException {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of(2L)));
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
 
         assertThat(chat.type()).isEqualTo(ChatType.DIRECT);
         assertThat(chat.title()).isNull();
@@ -61,15 +67,15 @@ class ChatServiceTest {
 
     @Test
     void createDirectChat_wrongMemberCount_throws() {
-        assertThatThrownBy(() -> chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of())))
+        assertThatThrownBy(() -> chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of())))
                 .isInstanceOf(ApiException.class);
-        assertThatThrownBy(() -> chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of(2L, 3L))))
+        assertThatThrownBy(() -> chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2, USER_3))))
                 .isInstanceOf(ApiException.class);
     }
 
     @Test
     void createGroupChat() throws ApiException {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, "Test Group", List.of(2L, 3L)));
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test Group", List.of(USER_2, USER_3)));
 
         assertThat(chat.type()).isEqualTo(ChatType.GROUP);
         assertThat(chat.title()).isEqualTo("Test Group");
@@ -78,15 +84,15 @@ class ChatServiceTest {
 
     @Test
     void createGroupChat_withoutTitle_throws() {
-        assertThatThrownBy(() -> chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, null, List.of(2L))))
+        assertThatThrownBy(() -> chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, null, List.of(USER_2))))
                 .isInstanceOf(ApiException.class);
-        assertThatThrownBy(() -> chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, "  ", List.of(2L))))
+        assertThatThrownBy(() -> chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "  ", List.of(USER_2))))
                 .isInstanceOf(ApiException.class);
     }
 
     @Test
     void createGroupChat_ownerExcludedFromMemberIds() throws ApiException {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, "Test", List.of(1L, 2L)));
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_1, USER_2)));
 
         assertThat(chat.members()).hasSize(2);
     }
@@ -95,16 +101,16 @@ class ChatServiceTest {
 
     @Test
     void getChats_returnsOnlyUserChatsById() throws ApiException {
-        chatService.createChat(1L, new CreateChatRequest(ChatType.SAVED, null, null));
-        chatService.createChat(2L, new CreateChatRequest(ChatType.SAVED, null, null));
-        chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of(2L)));
+        chatService.createChat(USER_1, new CreateChatRequest(ChatType.SAVED, null, null));
+        chatService.createChat(USER_2, new CreateChatRequest(ChatType.SAVED, null, null));
+        chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
         flushAndClear();
 
         var defaultPage = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "updatedAt", "id"));
 
-        var user1Chats = chatService.getChats(1L, defaultPage);
-        var user2Chats = chatService.getChats(2L, defaultPage);
-        var user3Chats = chatService.getChats(3L, defaultPage);
+        var user1Chats = chatService.getChats(USER_1, defaultPage);
+        var user2Chats = chatService.getChats(USER_2, defaultPage);
+        var user3Chats = chatService.getChats(USER_3, defaultPage);
 
         assertThat(user1Chats.getContent()).hasSize(2);
         assertThat(user1Chats.getTotalElements()).isEqualTo(2);
@@ -116,19 +122,19 @@ class ChatServiceTest {
 
     @Test
     void getChat_ById_accessible() throws ApiException {
-        var created = chatService.createChat(1L, new CreateChatRequest(ChatType.SAVED, null, null));
+        var created = chatService.createChat(USER_1, new CreateChatRequest(ChatType.SAVED, null, null));
         flushAndClear();
 
-        var chat = chatService.getChat(1L, created.id());
+        var chat = chatService.getChat(USER_1, created.id());
         assertThat(chat.id()).isEqualTo(created.id());
     }
 
     @Test
     void getChat_ById_notAccessible_throws() throws ApiException {
-        var created = chatService.createChat(1L, new CreateChatRequest(ChatType.SAVED, null, null));
+        var created = chatService.createChat(USER_1, new CreateChatRequest(ChatType.SAVED, null, null));
         flushAndClear();
 
-        assertThatThrownBy(() -> chatService.getChat(999L, created.id()))
+        assertThatThrownBy(() -> chatService.getChat(UNKNOWN_USER, created.id()))
                 .isInstanceOf(ApiException.class);
     }
 
@@ -136,26 +142,26 @@ class ChatServiceTest {
 
     @Test
     void deleteChat() throws ApiException {
-        var chat = createGroup(1L, 2L);
+        var chat = createGroup(USER_1, USER_2);
 
-        chatService.deleteChat(1L, chat.id());
+        chatService.deleteChat(USER_1, chat.id());
         flushAndClear();
 
-        assertThatThrownBy(() -> chatService.getChat(1L, chat.id()))
+        assertThatThrownBy(() -> chatService.getChat(USER_1, chat.id()))
                 .isInstanceOf(ApiException.class);
     }
 
     @Test
     void deleteChat_notOwner_throws() throws ApiException {
-        var chat = createGroup(1L, 2L);
+        var chat = createGroup(USER_1, USER_2);
 
-        assertThatThrownBy(() -> chatService.deleteChat(2L, chat.id()))
+        assertThatThrownBy(() -> chatService.deleteChat(USER_2, chat.id()))
                 .isInstanceOf(ApiException.class);
     }
 
     // --- helpers ---
 
-    private ChatDto createGroup(long ownerId, Long... memberIds) throws ApiException {
+    private ChatDto createGroup(UUID ownerId, UUID... memberIds) throws ApiException {
         var chat = chatService.createChat(ownerId, new CreateChatRequest(ChatType.GROUP, "Test Group", List.of(memberIds)));
         flushAndClear();
         return chat;

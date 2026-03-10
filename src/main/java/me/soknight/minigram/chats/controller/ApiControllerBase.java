@@ -5,9 +5,11 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 
+import java.util.UUID;
+
 public class ApiControllerBase {
 
-    protected long extractUserId(@Nullable Authentication authentication) throws ApiException {
+    protected UUID extractUserId(@Nullable Authentication authentication) throws ApiException {
         var name = authentication != null ? authentication.getName() : null;
         if (name == null || name.isBlank())
             throw new ApiException(
@@ -17,12 +19,12 @@ public class ApiControllerBase {
             );
 
         try {
-            return Long.parseLong(name);
-        } catch (NumberFormatException ex) {
+            return UUID.fromString(name);
+        } catch (IllegalArgumentException ex) {
             throw new ApiException(
                     HttpStatus.UNAUTHORIZED,
                     "invalid_token_subject",
-                    "JWT subject must contain numeric user id"
+                    "JWT subject must contain a valid UUID user id"
             );
         }
     }

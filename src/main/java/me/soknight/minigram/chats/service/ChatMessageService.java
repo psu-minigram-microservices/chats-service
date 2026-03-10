@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -32,7 +33,7 @@ public class ChatMessageService {
 
     @Transactional(readOnly = true)
     public @NonNull Page<ChatMessageDto> getMessages(
-            long userId,
+            UUID userId,
             long chatId,
             @NonNull Pageable pageable
     ) throws ApiException {
@@ -41,7 +42,7 @@ public class ChatMessageService {
     }
 
     @Transactional(readOnly = true)
-    public @NonNull ChatMessageDto getMessage(long userId, long chatId, long messageId) throws ApiException {
+    public @NonNull ChatMessageDto getMessage(UUID userId, long chatId, long messageId) throws ApiException {
         getMember(chatId, userId);
 
         var message = chatMessageRepository.findById(chatId, messageId).orElseThrow(() -> new ApiException(
@@ -56,7 +57,7 @@ public class ChatMessageService {
 
     @Transactional
     public @NonNull ChatMessageDto sendMessage(
-            long senderId,
+            UUID senderId,
             long chatId,
             @NonNull SendMessageRequest request
     ) throws ApiException {
@@ -76,7 +77,7 @@ public class ChatMessageService {
 
     @Transactional
     public @NonNull ChatMessageDto editMessage(
-            long actorUserId,
+            UUID actorUserId,
             long chatId,
             long messageId,
             @NonNull EditMessageRequest request
@@ -91,7 +92,7 @@ public class ChatMessageService {
     }
 
     @Transactional
-    public @NonNull ChatMessageDto deleteMessage(long actorUserId, long chatId, long messageId) throws ApiException {
+    public @NonNull ChatMessageDto deleteMessage(UUID actorUserId, long chatId, long messageId) throws ApiException {
         var message = getEditableMessage(chatId, messageId, actorUserId);
 
         var dto = ChatMessageDto.fromEntity(message);
@@ -104,7 +105,7 @@ public class ChatMessageService {
         return dto;
     }
 
-    private @NonNull ChatMemberEntity getMember(long chatId, long userId) throws ApiException {
+    private @NonNull ChatMemberEntity getMember(long chatId, UUID userId) throws ApiException {
         return chatMemberRepository.findById(chatId, userId).orElseThrow(() -> new ApiException(
                 HttpStatus.NOT_FOUND,
                 "chat_not_found",
@@ -113,7 +114,7 @@ public class ChatMessageService {
         ));
     }
 
-    private @NonNull ChatMessageEntity getEditableMessage(long chatId, long messageId, long actorUserId) throws ApiException {
+    private @NonNull ChatMessageEntity getEditableMessage(long chatId, long messageId, UUID actorUserId) throws ApiException {
         getMember(chatId, actorUserId);
 
         var message = chatMessageRepository.findById(chatId, messageId).orElseThrow(() -> new ApiException(
@@ -123,7 +124,7 @@ public class ChatMessageService {
                 messageId
         ));
 
-        if (message.getSenderId() != actorUserId)
+        if (!message.getSenderId().equals(actorUserId))
             throw new ApiException(
                     HttpStatus.FORBIDDEN,
                     "access_denied",

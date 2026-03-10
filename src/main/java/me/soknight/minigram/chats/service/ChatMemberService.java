@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -28,26 +29,26 @@ public class ChatMemberService {
     private final @NonNull ChatEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
-    public @NonNull Page<ChatMemberDto> getMembers(long userId, long chatId, @NonNull Pageable pageable) throws ApiException {
+    public @NonNull Page<ChatMemberDto> getMembers(UUID userId, long chatId, @NonNull Pageable pageable) throws ApiException {
         getExistingMember(chatId, userId);
         return chatMemberRepository.findByChatId(chatId, pageable)
                 .map(ChatMemberDto::fromEntity);
     }
 
     @Transactional(readOnly = true)
-    public @NonNull ChatMemberDto getMember(long actorUserId, long chatId, long memberId) throws ApiException {
+    public @NonNull ChatMemberDto getMember(UUID actorUserId, long chatId, UUID memberId) throws ApiException {
         getExistingMember(chatId, actorUserId);
         return ChatMemberDto.fromEntity(getExistingMember(chatId, memberId));
     }
 
     @Transactional
-    public @NonNull ChatMemberDto inviteUser(long actorUserId, long chatId, long invitedUserId) throws ApiException {
+    public @NonNull ChatMemberDto inviteUser(UUID actorUserId, long chatId, UUID invitedUserId) throws ApiException {
         var chat = chatService.getAccessibleChat(chatId, actorUserId);
 
         if (!chat.isGroup())
             throw new ApiException(HttpStatus.CONFLICT, "chat_invite_not_supported", "Only group chats support invitations");
 
-        if (chat.getOwnerId() != actorUserId)
+        if (!chat.getOwnerId().equals(actorUserId))
             throw new ApiException(HttpStatus.FORBIDDEN, "access_denied", "Only chat owner can invite new members");
 
         if (chatMemberRepository.existsById(chatId, invitedUserId))
@@ -63,36 +64,36 @@ public class ChatMemberService {
     }
 
     @Transactional
-    public @NonNull ChatMemberDto leaveChat(long userId, long chatId) throws ApiException {
+    public @NonNull ChatMemberDto leaveChat(UUID userId, long chatId) throws ApiException {
         var chat = chatService.getAccessibleChat(chatId, userId);
 
         if (chat.isSaved())
             throw new ApiException(HttpStatus.CONFLICT, "cannot_leave_chat", "Saved messages chat cannot be left");
 
-        if (chat.getOwnerId() == userId)
+        if (chat.getOwnerId().equals(userId))
             throw new ApiException(HttpStatus.CONFLICT, "owner_cannot_leave_chat", "Chat owner cannot leave their own chat");
 
         return dropChatMember(userId, chatId, chat);
     }
 
     @Transactional
-    public @NonNull ChatMemberDto kickUser(long actorUserId, long chatId, long kickedUserId) throws ApiException {
+    public @NonNull ChatMemberDto kickUser(UUID actorUserId, long chatId, UUID kickedUserId) throws ApiException {
         var chat = chatService.getAccessibleChat(chatId, actorUserId);
 
         if (!chat.isGroup())
             throw new ApiException(HttpStatus.CONFLICT, "chat_kick_not_supported", "Only group chats support kicking users");
 
-        if (chat.getOwnerId() != actorUserId)
+        if (!chat.getOwnerId().equals(actorUserId))
             throw new ApiException(HttpStatus.FORBIDDEN, "access_denied", "Only chat owner can kick members");
 
-        if (actorUserId == kickedUserId)
+        if (actorUserId.equals(kickedUserId))
             throw new ApiException(HttpStatus.CONFLICT, "cannot_kick_self", "Use leave chat endpoint to remove yourself");
 
         return dropChatMember(kickedUserId, chatId, chat);
     }
 
     private @NonNull ChatMemberDto dropChatMember(
-            long userId,
+            UUID userId,
             long chatId,
             @NonNull ChatEntity chat
     ) throws ApiException {
@@ -105,7 +106,7 @@ public class ChatMemberService {
         return dto;
     }
 
-    private @NonNull ChatMemberEntity getExistingMember(long chatId, long userId) throws ApiException {
+    private @NonNull ChatMemberEntity getExistingMember(long chatId, UUID userId) throws ApiException {
         return chatMemberRepository.findById(chatId, userId)
                 .orElseThrow(() -> new ApiException(
                         HttpStatus.NOT_FOUND,
