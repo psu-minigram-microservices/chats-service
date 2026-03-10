@@ -39,18 +39,34 @@ public interface ChatRepository extends JpaRepository<ChatEntity, Long> {
     Optional<ChatEntity> findAccessibleById(long chatId, long userId);
 
     @Modifying
-    @Query("update ChatEntity chat set chat.lastMessageId = :messageId, chat.updatedAt = :now where chat.id = :chatId")
+    @Query("""
+            update ChatEntity chat
+            set chat.lastMessageId = :messageId, chat.updatedAt = :now
+            where chat.id = :chatId
+            """)
     void updateLastMessageId(long chatId, @Nullable Long messageId, Instant now);
 
     @Modifying
-    @Query("update ChatEntity chat set chat.updatedAt = :now where chat.id = :chatId")
+    @Query("""
+            update ChatEntity chat
+            set chat.updatedAt = :now
+            where chat.id = :chatId
+            """)
     void touch(long chatId, Instant now);
 
     @Modifying
-    @Query("update ChatEntity chat set chat.messageSequence = chat.messageSequence + 1 where chat.id = :chatId")
+    @Query("""
+            update ChatEntity chat
+            set chat.messageSequence = chat.messageSequence + 1
+            where chat.id = :chatId
+            """)
     void incrementMessageSequence(long chatId);
 
-    @Query("select chat.messageSequence from ChatEntity chat where chat.id = :chatId")
+    @Query("""
+            select chat.messageSequence
+            from ChatEntity chat
+            where chat.id = :chatId
+            """)
     long getMessageSequence(long chatId);
 
 }

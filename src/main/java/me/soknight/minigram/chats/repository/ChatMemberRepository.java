@@ -2,6 +2,8 @@ package me.soknight.minigram.chats.repository;
 
 import me.soknight.minigram.chats.model.entity.ChatMemberEntity;
 import me.soknight.minigram.chats.model.entity.ChatMemberId;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -10,8 +12,19 @@ import java.util.Optional;
 
 public interface ChatMemberRepository extends JpaRepository<ChatMemberEntity, ChatMemberId> {
 
-    @Query("select cm.id.userId from ChatMemberEntity cm where cm.chat.id = :chatId")
+    @Query("""
+            select chat_member.id.userId
+            from ChatMemberEntity chat_member
+            where chat_member.chat.id = :chatId
+            """)
     List<Long> findUserIdsByChatId(long chatId);
+
+    @Query("""
+            select chat_member
+            from ChatMemberEntity chat_member
+            where chat_member.chat.id = :chatId
+            """)
+    Page<ChatMemberEntity> findByChatId(long chatId, Pageable pageable);
 
     @Query("""
             select chat_member

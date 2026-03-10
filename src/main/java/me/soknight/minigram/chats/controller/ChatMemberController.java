@@ -26,57 +26,58 @@ public class ChatMemberController extends ApiControllerBase {
     // -------------- /chats/{id}/members ------------------------------------------------------------------------------
 
     @GetMapping("/{chat_id}/members")
-    public Page<ChatMemberDto> getMembers(
+    public @NonNull Page<ChatMemberDto> getMembers(
             @PathVariable("chat_id") @Positive long chatId,
             @PageableDefault(size = 50, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable,
             @Nullable Authentication authentication
     ) throws ApiException {
-        return null;
+        return chatMemberService.getMembers(extractUserId(authentication), chatId, pageable);
     }
 
     @PostMapping("/{chat_id}/members/{user_id}")
-    public ChatMemberDto inviteUser(
+    public @NonNull ChatMemberDto inviteUser(
             @PathVariable("chat_id") @Positive long chatId,
             @PathVariable("user_id") @Positive long userId,
             @Nullable Authentication authentication
     ) throws ApiException {
-        return null;
+        return chatMemberService.inviteUser(extractUserId(authentication), chatId, userId);
     }
 
     // -------------- /chats/{id}/members/{id} -------------------------------------------------------------------------
 
     @GetMapping("/{chat_id}/members/me")
-    public ChatMemberDto getMemberMe(
+    public @NonNull ChatMemberDto getMemberMe(
             @PathVariable("chat_id") @Positive long chatId,
             @Nullable Authentication authentication
     ) throws ApiException {
-        return null;
+        long actorUserId = extractUserId(authentication);
+        return chatMemberService.getMember(actorUserId, chatId, actorUserId);
     }
 
     @GetMapping("/{chat_id}/members/{member_id}")
-    public ChatMemberDto getMemberById(
+    public @NonNull ChatMemberDto getMemberById(
             @PathVariable("chat_id") @Positive long chatId,
             @PathVariable("member_id") @Positive long memberId,
             @Nullable Authentication authentication
     ) throws ApiException {
-        return null;
+        return chatMemberService.getMember(extractUserId(authentication), chatId, memberId);
     }
 
     @DeleteMapping("/{chat_id}/members/me")
-    public ChatMemberDto leaveFromChat(
+    public @NonNull ChatMemberDto leaveChat(
             @PathVariable("chat_id") @Positive long chatId,
             @Nullable Authentication authentication
     ) throws ApiException {
-        return null;
+        return chatMemberService.leaveChat(extractUserId(authentication), chatId);
     }
 
     @DeleteMapping("/{chat_id}/members/{member_id}")
-    public ChatMemberDto kickMember(
+    public @NonNull ChatMemberDto kickUser(
             @PathVariable("chat_id") @Positive long chatId,
             @PathVariable("member_id") @Positive long memberId,
             @Nullable Authentication authentication
     ) throws ApiException {
-        return null;
+        return chatMemberService.kickUser(extractUserId(authentication), chatId, memberId);
     }
 
 }
