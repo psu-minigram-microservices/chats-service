@@ -5,8 +5,9 @@ import me.soknight.minigram.chats.model.attribute.ChatType;
 import me.soknight.minigram.chats.model.request.CreateChatRequest;
 import me.soknight.minigram.chats.model.request.EditMessageRequest;
 import me.soknight.minigram.chats.model.request.SendMessageRequest;
+import me.soknight.minigram.chats.service.ChatMemberService;
+import me.soknight.minigram.chats.service.ChatMessageService;
 import me.soknight.minigram.chats.service.ChatService;
-import me.soknight.minigram.chats.service.MessageService;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +46,8 @@ class WebSocketIntegrationTest {
     @Value("${server.jwt.secret}") String jwtSecret;
 
     @Autowired ChatService chatService;
-    @Autowired MessageService messageService;
+    @Autowired ChatMemberService chatMemberService;
+    @Autowired ChatMessageService messageService;
 
     private WebSocketStompClient stompClient;
     private StompSession session;
@@ -90,7 +92,7 @@ class WebSocketIntegrationTest {
         var message = messageService.sendMessage(1L, chat.id(), new SendMessageRequest("original"));
         subscribeToEvents();
 
-        messageService.editMessage(1L, message.id(), new EditMessageRequest("updated"));
+        messageService.editMessage(1L, chat.id(), message.id(), new EditMessageRequest("updated"));
 
         var event = pollEvent();
         assertThat(event).isNotNull();
@@ -103,7 +105,7 @@ class WebSocketIntegrationTest {
         var message = messageService.sendMessage(1L, chat.id(), new SendMessageRequest("to delete"));
         subscribeToEvents();
 
-        messageService.deleteMessage(1L, message.id());
+        messageService.deleteMessage(1L, chat.id(), message.id());
 
         var event = pollEvent();
         assertThat(event).isNotNull();
@@ -116,7 +118,7 @@ class WebSocketIntegrationTest {
         var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, "Test", List.of(2L)));
         subscribeToEvents();
 
-        chatService.inviteUser(1L, chat.id(), 3L);
+        chatMemberService.inviteUser(1L, chat.id(), 3L);
 
         var event = pollEvent();
         assertThat(event).isNotNull();
@@ -129,7 +131,7 @@ class WebSocketIntegrationTest {
         var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, "Test", List.of(2L)));
         subscribeToEvents();
 
-        chatService.leaveChat(2L, chat.id());
+        chatMemberService.leaveChat(2L, chat.id());
 
         var event = pollEvent();
         assertThat(event).isNotNull();
@@ -141,7 +143,7 @@ class WebSocketIntegrationTest {
         var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.GROUP, "Test", List.of(2L, 3L)));
         subscribeToEvents();
 
-        chatService.kickUser(1L, chat.id(), 2L);
+        chatMemberService.kickUser(1L, chat.id(), 2L);
 
         var event = pollEvent();
         assertThat(event).isNotNull();

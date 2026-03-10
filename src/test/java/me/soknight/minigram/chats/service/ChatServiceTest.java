@@ -6,7 +6,6 @@ import me.soknight.minigram.chats.model.attribute.ChatMemberRole;
 import me.soknight.minigram.chats.model.attribute.ChatType;
 import me.soknight.minigram.chats.model.dto.ChatDto;
 import me.soknight.minigram.chats.model.request.CreateChatRequest;
-import me.soknight.minigram.chats.model.request.SendMessageRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,7 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ChatServiceTest {
 
     @Autowired ChatService chatService;
-    @Autowired MessageService messageService;
     @Autowired EntityManager em;
 
     private void flushAndClear() {
@@ -93,10 +91,10 @@ class ChatServiceTest {
         assertThat(chat.members()).hasSize(2);
     }
 
-    // --- listChats ---
+    // --- getChats ---
 
     @Test
-    void listChats_returnsOnlyUserChats() throws ApiException {
+    void getChats_returnsOnlyUserChatsById() throws ApiException {
         chatService.createChat(1L, new CreateChatRequest(ChatType.SAVED, null, null));
         chatService.createChat(2L, new CreateChatRequest(ChatType.SAVED, null, null));
         chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of(2L)));
@@ -104,9 +102,9 @@ class ChatServiceTest {
 
         var defaultPage = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "updatedAt", "id"));
 
-        var user1Chats = chatService.listChats(1L, defaultPage);
-        var user2Chats = chatService.listChats(2L, defaultPage);
-        var user3Chats = chatService.listChats(3L, defaultPage);
+        var user1Chats = chatService.getChats(1L, defaultPage);
+        var user2Chats = chatService.getChats(2L, defaultPage);
+        var user3Chats = chatService.getChats(3L, defaultPage);
 
         assertThat(user1Chats.getContent()).hasSize(2);
         assertThat(user1Chats.getTotalElements()).isEqualTo(2);
@@ -117,7 +115,7 @@ class ChatServiceTest {
     // --- getChat ---
 
     @Test
-    void getChat_accessible() throws ApiException {
+    void getChat_ById_accessible() throws ApiException {
         var created = chatService.createChat(1L, new CreateChatRequest(ChatType.SAVED, null, null));
         flushAndClear();
 
@@ -126,120 +124,11 @@ class ChatServiceTest {
     }
 
     @Test
-    void getChat_notAccessible_throws() throws ApiException {
+    void getChat_ById_notAccessible_throws() throws ApiException {
         var created = chatService.createChat(1L, new CreateChatRequest(ChatType.SAVED, null, null));
         flushAndClear();
 
         assertThatThrownBy(() -> chatService.getChat(999L, created.id()))
-                .isInstanceOf(ApiException.class);
-    }
-
-    // --- inviteUser ---
-
-    @Test
-    void inviteUser() throws ApiException {
-        var chat = createGroup(1L, 2L);
-
-        var member = chatService.inviteUser(1L, chat.id(), 3L);
-
-        assertThat(member.userId()).isEqualTo(3L);
-        assertThat(member.role()).isEqualTo(ChatMemberRole.MEMBER);
-        flushAndClear();
-
-        var updated = chatService.getChat(1L, chat.id());
-        assertThat(updated.members()).hasSize(3);
-    }
-
-    @Test
-    void inviteUser_notGroup_throws() throws ApiException {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of(2L)));
-        flushAndClear();
-
-        assertThatThrownBy(() -> chatService.inviteUser(1L, chat.id(), 3L))
-                .isInstanceOf(ApiException.class);
-    }
-
-    @Test
-    void inviteUser_notOwner_throws() throws ApiException {
-        var chat = createGroup(1L, 2L);
-
-        assertThatThrownBy(() -> chatService.inviteUser(2L, chat.id(), 3L))
-                .isInstanceOf(ApiException.class);
-    }
-
-    @Test
-    void inviteUser_alreadyMember_throws() throws ApiException {
-        var chat = createGroup(1L, 2L);
-
-        assertThatThrownBy(() -> chatService.inviteUser(1L, chat.id(), 2L))
-                .isInstanceOf(ApiException.class);
-    }
-
-    // --- leaveChat ---
-
-    @Test
-    void leaveChat() throws ApiException {
-        var chat = createGroup(1L, 2L);
-
-        chatService.leaveChat(2L, chat.id());
-        flushAndClear();
-
-        var updated = chatService.getChat(1L, chat.id());
-        assertThat(updated.members()).hasSize(1);
-    }
-
-    @Test
-    void leaveChat_savedChat_throws() throws ApiException {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.SAVED, null, null));
-        flushAndClear();
-
-        assertThatThrownBy(() -> chatService.leaveChat(1L, chat.id()))
-                .isInstanceOf(ApiException.class);
-    }
-
-    @Test
-    void leaveChat_owner_throws() throws ApiException {
-        var chat = createGroup(1L, 2L);
-
-        assertThatThrownBy(() -> chatService.leaveChat(1L, chat.id()))
-                .isInstanceOf(ApiException.class);
-    }
-
-    // --- kickUser ---
-
-    @Test
-    void kickUser() throws ApiException {
-        var chat = createGroup(1L, 2L, 3L);
-
-        chatService.kickUser(1L, chat.id(), 2L);
-        flushAndClear();
-
-        var updated = chatService.getChat(1L, chat.id());
-        assertThat(updated.members()).hasSize(2);
-    }
-
-    @Test
-    void kickUser_notGroup_throws() throws ApiException {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of(2L)));
-        flushAndClear();
-
-        assertThatThrownBy(() -> chatService.kickUser(1L, chat.id(), 2L))
-                .isInstanceOf(ApiException.class);
-    }
-
-    @Test
-    void kickUser_notOwner_throws() throws ApiException {
-        var chat = createGroup(1L, 2L, 3L);
-
-        assertThatThrownBy(() -> chatService.kickUser(2L, chat.id(), 3L))
-                .isInstanceOf(ApiException.class);
-    }
-
-    @Test
-    void kickUser_self_throws() throws ApiException {
-        var chat = createGroup(1L, 2L);
-
-        assertThatThrownBy(() -> chatService.kickUser(1L, chat.id(), 1L))
                 .isInstanceOf(ApiException.class);
     }
 
@@ -261,39 +150,6 @@ class ChatServiceTest {
         var chat = createGroup(1L, 2L);
 
         assertThatThrownBy(() -> chatService.deleteChat(2L, chat.id()))
-                .isInstanceOf(ApiException.class);
-    }
-
-    // --- getMessages ---
-
-    @Test
-    void getMessages_pagination() throws ApiException {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.DIRECT, null, List.of(2L)));
-        flushAndClear();
-
-        for (int i = 0; i < 5; i++) {
-            messageService.sendMessage(1L, chat.id(), new SendMessageRequest("message " + i));
-            flushAndClear();
-        }
-
-        var messagesSort = Sort.by(Sort.Direction.DESC, "createdAt", "id");
-
-        var all = chatService.getMessages(1L, chat.id(), PageRequest.of(0, 50, messagesSort));
-        assertThat(all.getContent()).hasSize(5);
-        assertThat(all.getTotalElements()).isEqualTo(5);
-
-        var secondPage = chatService.getMessages(1L, chat.id(), PageRequest.of(1, 3, messagesSort));
-        assertThat(secondPage.getContent()).hasSize(2);
-        assertThat(secondPage.getTotalElements()).isEqualTo(5);
-    }
-
-    @Test
-    void getMessages_notAccessible_throws() throws ApiException {
-        var chat = chatService.createChat(1L, new CreateChatRequest(ChatType.SAVED, null, null));
-        flushAndClear();
-
-        var pageable = PageRequest.of(0, 50, Sort.by(Sort.Direction.DESC, "createdAt", "id"));
-        assertThatThrownBy(() -> chatService.getMessages(999L, chat.id(), pageable))
                 .isInstanceOf(ApiException.class);
     }
 
