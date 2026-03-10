@@ -1,5 +1,6 @@
 package me.soknight.minigram.chats.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/chats")
 @AllArgsConstructor
+@Tag(name = "Chat Messages", description = "Manage messages in chats: send, view, edit and delete")
 public class ChatMessageController extends ApiControllerBase {
 
     private final @NonNull ChatMessageService chatMessageService;

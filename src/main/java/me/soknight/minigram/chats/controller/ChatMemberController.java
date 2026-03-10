@@ -1,5 +1,6 @@
 package me.soknight.minigram.chats.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import me.soknight.minigram.chats.exception.ApiException;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/chats")
 @AllArgsConstructor
+@Tag(name = "Chat Members", description = "Manage members in chats: invite, view, kick and leave")
 public class ChatMemberController extends ApiControllerBase {
 
     private final @NonNull ChatMemberService chatMemberService;
