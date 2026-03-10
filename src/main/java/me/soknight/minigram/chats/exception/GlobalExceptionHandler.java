@@ -1,6 +1,7 @@
 package me.soknight.minigram.chats.exception;
 
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import me.soknight.minigram.chats.model.dto.ErrorDto;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -38,6 +40,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public @NonNull ResponseEntity<ErrorDto> handleUnexpectedError(@NonNull Exception ex) {
+        log.error("Unhandled internal server error!", ex);
+
         var error = new GenericErrorException(ex);
         return ResponseEntity.status(error.getStatusCode()).body(error.constructModel());
     }
