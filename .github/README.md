@@ -39,7 +39,12 @@ cp .env.example .env
 docker compose up --build
 ```
 
-The service will be available at [localhost:8080](http://localhost:8080).
+### Web interfaces
+
+| URL                                                                  | Description                         |
+|----------------------------------------------------------------------|-------------------------------------|
+| [localhost:8080](http://localhost:8080)                              | Demo chat client (WebSocket + REST) |
+| [localhost:8080/docs/swagger](http://localhost:8080/docs/swagger-ui) | Swagger UI — interactive API docs   |
 
 ### Stop service
 
