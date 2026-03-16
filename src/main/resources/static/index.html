@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minigram Chat Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-panel: #0f3460;
+            --accent: #e94560;
+            --accent-hover: #ff6b81;
+            --text: #eee;
+            --text-muted: #999;
+            --border: #2a2a4a;
+            --msg-own: #0f3460;
+            --msg-other: #16213e;
+            --success: #2ed573;
+            --warning: #ffa502;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ── Auth Screen ── */
+        #auth-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .auth-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 40px;
+            width: 480px;
+            max-width: 90vw;
+        }
+
+        .auth-card h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .auth-card p {
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .auth-card label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .auth-card input, .auth-card textarea {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 10px 14px;
+            font-size: 14px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            margin-bottom: 16px;
+            resize: vertical;
+        }
+
+        .auth-card textarea { min-height: 80px; }
+
+        .auth-card input:focus, .auth-card textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover { background: var(--accent-hover); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-outline:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-danger {
+            background: #c0392b;
+        }
+
+        .btn-danger:hover {
+            background: #e74c3c;
+        }
+
+        /* ── Main Layout ── */
+        #main-screen {
+            display: none;
+            height: 100vh;
+        }
+
+        .layout {
+            display: flex;
+            height: 100%;
+        }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            width: 320px;
+            min-width: 320px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-header h2 { font-size: 18px; }
+
+        .user-info {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: monospace;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sidebar-actions {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+        }
+
+        .sidebar-actions .btn { flex: 1; font-size: 12px; }
+
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .chat-item {
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 4px;
+            transition: background 0.15s;
+        }
+
+        .chat-item:hover { background: var(--bg-panel); }
+        .chat-item.active { background: var(--bg-panel); border-left: 3px solid var(--accent); }
+
+        .chat-item-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .chat-item-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .chat-type-badge {
+            display: inline-block;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: var(--bg);
+            color: var(--text-muted);
+            margin-left: 6px;
+        }
+
+        .ws-status {
+            padding: 8px 16px;
+            font-size: 11px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ws-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .ws-dot.connected { background: var(--success); }
+        .ws-dot.error { background: var(--accent); }
+
+        /* ── Chat Panel ── */
+        .chat-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg);
+        }
+
+        .chat-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-header-info h3 { font-size: 16px; }
+
+        .chat-header-info span {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .chat-header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .no-chat-selected {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.4;
+            position: relative;
+        }
+
+        .message.own {
+            align-self: flex-end;
+            background: var(--msg-own);
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.other {
+            align-self: flex-start;
+            background: var(--msg-other);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-sender {
+            font-size: 11px;
+            color: var(--accent);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .message-content { word-break: break-word; }
+
+        .message-time {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        .message-edited {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .message-actions {
+            display: none;
+            position: absolute;
+            top: 4px;
+            right: 8px;
+            gap: 4px;
+        }
+
+        .message:hover .message-actions { display: flex; }
+
+        .message-actions button {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .message-actions button:hover { color: var(--text); }
+
+        .message-input-area {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-input-area input {
+            flex: 1;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 10px 14px;
+            font-size: 14px;
+        }
+
+        .message-input-area input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            width: 400px;
+            max-width: 90vw;
+        }
+
+        .modal h3 { margin-bottom: 16px; }
+
+        .modal label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .modal input, .modal select {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 8px 12px;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .modal input:focus, .modal select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+
+        /* ── Events Log ── */
+        .events-log {
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 8px 16px;
+            border-top: 1px solid var(--border);
+            font-size: 11px;
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .event-entry {
+            padding: 2px 0;
+            color: var(--text-muted);
+        }
+
+        .event-entry .event-type { color: var(--warning); font-weight: 600; }
+
+        /* ── Members Panel ── */
+        .members-panel {
+            width: 240px;
+            min-width: 240px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            display: none;
+            flex-direction: column;
+        }
+
+        .members-panel.show { display: flex; }
+
+        .members-panel-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .members-panel-header h4 { font-size: 14px; }
+
+        .members-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .member-item {
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .member-item:hover { background: var(--bg-panel); }
+
+        .member-id {
+            font-size: 12px;
+            font-family: monospace;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .member-role {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: var(--bg);
+        }
+
+        .member-role.owner { color: var(--warning); }
+
+        /* ── Toast ── */
+        .toast-container {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 13px;
+            animation: slideIn 0.3s ease;
+            max-width: 350px;
+        }
+
+        .toast.error { border-color: var(--accent); }
+        .toast.success { border-color: var(--success); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* ── User Picker ── */
+        .user-picker-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--text);
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .user-picker-btn:hover {
+            border-color: var(--accent);
+        }
+
+        .user-picker-btn .user-uuid {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+        }
+
+        .user-picker-btn .connect-label {
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+    </style>
+</head>
+<body>
+
+<!-- Auth Screen -->
+<div id="auth-screen">
+    <div class="auth-card">
+        <h1>Minigram Chat</h1>
+        <p>Demo client for the chats microservice.</p>
+
+        <label for="base-url">Service URL</label>
+        <input type="text" id="base-url" value="http://localhost:8080" placeholder="http://localhost:8080">
+
+        <!-- Sandbox user picker (shown when well-known users are available) -->
+        <div id="sandbox-auth" style="display: none;">
+            <label>Select a test user</label>
+            <div id="user-picker" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;"></div>
+            <div style="text-align: center; margin-bottom: 12px;">
+                <span style="color: var(--text-muted); font-size: 12px;">or</span>
+                <a href="#" onclick="showManualAuth(); return false;" style="color: var(--accent); font-size: 12px; margin-left: 4px;">enter token manually</a>
+            </div>
+        </div>
+
+        <!-- Manual token input (shown as fallback) -->
+        <div id="manual-auth">
+            <label for="jwt-token">JWT Token</label>
+            <textarea id="jwt-token" placeholder="eyJhbGciOiJIUzI1NiIs..."></textarea>
+            <button class="btn" onclick="connect()" style="width: 100%">Connect</button>
+        </div>
+    </div>
+</div>
+
+<!-- Main Screen -->
+<div id="main-screen">
+    <div class="layout">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Chats</h2>
+                <span class="user-info" id="user-id-display"></span>
+            </div>
+            <div class="sidebar-actions">
+                <button class="btn btn-sm" onclick="showCreateChatModal()">New Chat</button>
+                <button class="btn btn-sm btn-outline" onclick="loadChats()">Refresh</button>
+                <button class="btn btn-sm btn-outline" onclick="disconnect()">Logout</button>
+            </div>
+            <div class="chat-list" id="chat-list"></div>
+            <div class="events-log" id="events-log"></div>
+            <div class="ws-status">
+                <div class="ws-dot" id="ws-dot"></div>
+                <span id="ws-status-text">Disconnected</span>
+            </div>
+        </div>
+
+        <!-- Chat Panel -->
+        <div class="chat-panel" id="chat-panel">
+            <div class="no-chat-selected" id="no-chat">Select a chat to start messaging</div>
+
+            <div id="active-chat" style="display: none; flex: 1; display: flex; flex-direction: column;">
+                <div class="chat-header">
+                    <div class="chat-header-info">
+                        <h3 id="chat-title"></h3>
+                        <span id="chat-meta"></span>
+                    </div>
+                    <div class="chat-header-actions">
+                        <button class="btn btn-sm btn-outline" onclick="toggleMembers()">Members</button>
+                        <button class="btn btn-sm btn-outline" onclick="showEditChatModal()">Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteChat()">Delete</button>
+                    </div>
+                </div>
+                <div class="messages-area" id="messages-area"></div>
+                <div class="message-input-area">
+                    <input type="text" id="message-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMessage()">
+                    <button class="btn" onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Members Panel -->
+        <div class="members-panel" id="members-panel">
+            <div class="members-panel-header">
+                <h4>Members</h4>
+                <button class="btn btn-sm" onclick="showInviteMemberModal()">Invite</button>
+            </div>
+            <div class="members-list" id="members-list"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Chat Modal -->
+<div class="modal-overlay" id="create-chat-modal">
+    <div class="modal">
+        <h3>Create Chat</h3>
+        <label for="new-chat-type">Type</label>
+        <select id="new-chat-type" onchange="onChatTypeChange()">
+            <option value="SAVED">Saved (personal)</option>
+            <option value="DIRECT">Direct (1-on-1)</option>
+            <option value="GROUP" selected>Group</option>
+        </select>
+
+        <div id="chat-title-field">
+            <label for="new-chat-title">Title</label>
+            <input type="text" id="new-chat-title" placeholder="Chat title" maxlength="255">
+        </div>
+
+        <div id="chat-members-field">
+            <label for="new-chat-members">Member UUIDs (comma-separated)</label>
+            <input type="text" id="new-chat-members" placeholder="uuid1, uuid2, ...">
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="hideModal('create-chat-modal')">Cancel</button>
+            <button class="btn" onclick="createChat()">Create</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Chat Modal -->
+<div class="modal-overlay" id="edit-chat-modal">
+    <div class="modal">
+        <h3>Edit Chat</h3>
+        <label for="edit-chat-title">Title</label>
+        <input type="text" id="edit-chat-title" placeholder="New title" maxlength="255">
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="hideModal('edit-chat-modal')">Cancel</button>
+            <button class="btn" onclick="editChat()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Invite Member Modal -->
+<div class="modal-overlay" id="invite-member-modal">
+    <div class="modal">
+        <h3>Invite Member</h3>
+        <label for="invite-user-id">User UUID</label>
+        <input type="text" id="invite-user-id" placeholder="00000000-0000-0000-0000-000000000000">
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="hideModal('invite-member-modal')">Cancel</button>
+            <button class="btn" onclick="inviteMember()">Invite</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Message Modal -->
+<div class="modal-overlay" id="edit-message-modal">
+    <div class="modal">
+        <h3>Edit Message</h3>
+        <label for="edit-message-content">Content</label>
+        <input type="text" id="edit-message-content" placeholder="New content" maxlength="4000">
+        <input type="hidden" id="edit-message-id">
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="hideModal('edit-message-modal')">Cancel</button>
+            <button class="btn" onclick="editMessage()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+    // ── State ──
+    let baseUrl = '';
+    let token = '';
+    let userId = '';
+    let stompClient = null;
+    let currentChatId = null;
+    let chats = [];
+    let messages = [];
+
+    // ── Auth & Connection ──
+
+    let wellKnownUsers = [];
+
+    function parseJwt(t) {
+        const payload = t.split('.')[1];
+        return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+    }
+
+    async function loadWellKnownUsers() {
+        const url = document.getElementById('base-url').value.trim().replace(/\/+$/, '');
+        try {
+            const res = await fetch(`${url}/api/v1/sandbox/well-known-users`);
+            if (!res.ok) throw new Error();
+            wellKnownUsers = await res.json();
+            if (wellKnownUsers.length > 0) {
+                renderUserPicker();
+                document.getElementById('sandbox-auth').style.display = '';
+                document.getElementById('manual-auth').style.display = 'none';
+                return;
+            }
+        } catch {}
+        document.getElementById('sandbox-auth').style.display = 'none';
+        document.getElementById('manual-auth').style.display = '';
+    }
+
+    function renderUserPicker() {
+        const picker = document.getElementById('user-picker');
+        picker.innerHTML = wellKnownUsers.map((u, i) => `
+            <button class="user-picker-btn" onclick="connectWithToken('${u.token}')">
+                <span class="user-uuid">${u.user_id}</span>
+                <span class="connect-label">User ${i + 1} &rarr;</span>
+            </button>
+        `).join('');
+    }
+
+    function showManualAuth() {
+        document.getElementById('sandbox-auth').style.display = 'none';
+        document.getElementById('manual-auth').style.display = '';
+    }
+
+    function connectWithToken(t) {
+        token = t;
+        baseUrl = document.getElementById('base-url').value.trim().replace(/\/+$/, '');
+
+        try {
+            const claims = parseJwt(token);
+            userId = claims.sub;
+            if (!userId) throw new Error('No sub claim');
+        } catch (e) {
+            toast('Invalid JWT token: ' + e.message, 'error');
+            return;
+        }
+
+        enterMainScreen();
+    }
+
+    function connect() {
+        token = document.getElementById('jwt-token').value.trim();
+        baseUrl = document.getElementById('base-url').value.trim().replace(/\/+$/, '');
+
+        if (!token) {
+            toast('Please enter a JWT token', 'error');
+            return;
+        }
+
+        try {
+            const claims = parseJwt(token);
+            userId = claims.sub;
+            if (!userId) throw new Error('No sub claim');
+        } catch (e) {
+            toast('Invalid JWT token: ' + e.message, 'error');
+            return;
+        }
+
+        enterMainScreen();
+    }
+
+    function enterMainScreen() {
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('main-screen').style.display = 'block';
+        document.getElementById('user-id-display').textContent = userId;
+
+        connectWebSocket();
+        loadChats();
+    }
+
+    function disconnect() {
+        if (stompClient) {
+            stompClient.deactivate();
+            stompClient = null;
+        }
+        currentChatId = null;
+        document.getElementById('auth-screen').style.display = '';
+        document.getElementById('main-screen').style.display = 'none';
+        updateWsStatus('disconnected');
+        loadWellKnownUsers();
+    }
+
+    function connectWebSocket() {
+        const wsProtocol = baseUrl.startsWith('https') ? 'wss' : 'ws';
+        const wsHost = baseUrl.replace(/^https?:\/\//, '');
+        const wsUrl = `${wsProtocol}://${wsHost}/ws?token=${encodeURIComponent(token)}`;
+
+        stompClient = new StompJs.Client({
+            webSocketFactory: () => new WebSocket(wsUrl),
+            reconnectDelay: 5000,
+            debug: (msg) => console.log('[STOMP]', msg),
+        });
+
+        stompClient.onConnect = () => {
+            updateWsStatus('connected');
+            logEvent('CONNECTED', 'WebSocket connection established');
+
+            stompClient.subscribe('/user/queue/events', (frame) => {
+                const event = JSON.parse(frame.body);
+                handleEvent(event);
+            });
+        };
+
+        stompClient.onStompError = (frame) => {
+            updateWsStatus('error');
+            logEvent('ERROR', frame.headers?.message || 'STOMP error');
+        };
+
+        stompClient.onWebSocketClose = () => {
+            updateWsStatus('disconnected');
+            logEvent('DISCONNECTED', 'WebSocket connection closed');
+        };
+
+        stompClient.activate();
+    }
+
+    function updateWsStatus(status) {
+        const dot = document.getElementById('ws-dot');
+        const text = document.getElementById('ws-status-text');
+        dot.className = 'ws-dot ' + (status === 'connected' ? 'connected' : status === 'error' ? 'error' : '');
+        text.textContent = status === 'connected' ? 'Connected' : status === 'error' ? 'Error' : 'Disconnected';
+    }
+
+    // ── API Helpers ──
+
+    async function api(method, path, body) {
+        const opts = {
+            method,
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        };
+        if (body) opts.body = JSON.stringify(body);
+
+        const res = await fetch(`${baseUrl}${path}`, opts);
+        if (!res.ok) {
+            let errMsg = `HTTP ${res.status}`;
+            try {
+                const err = await res.json();
+                errMsg = err.error_message || err.message || errMsg;
+            } catch {}
+            throw new Error(errMsg);
+        }
+
+        if (res.status === 204) return null;
+        const text = await res.text();
+        return text ? JSON.parse(text) : null;
+    }
+
+    // ── Chats ──
+
+    async function loadChats() {
+        try {
+            const data = await api('GET', '/api/v1/chats?size=100');
+            chats = data.content || [];
+            renderChatList();
+        } catch (e) {
+            toast('Failed to load chats: ' + e.message, 'error');
+        }
+    }
+
+    function renderChatList() {
+        const list = document.getElementById('chat-list');
+        if (chats.length === 0) {
+            list.innerHTML = '<div style="padding: 20px; color: var(--text-muted); text-align: center; font-size: 13px;">No chats yet</div>';
+            return;
+        }
+
+        list.innerHTML = chats.map(chat => `
+            <div class="chat-item ${chat.id === currentChatId ? 'active' : ''}" onclick="openChat(${chat.id})">
+                <div class="chat-item-title">
+                    ${escapeHtml(chat.title || chatTypeName(chat.type))}
+                    <span class="chat-type-badge">${chat.type}</span>
+                </div>
+                <div class="chat-item-meta">
+                    ${chat.members ? chat.members.length + ' members' : ''}
+                    · ID: ${chat.id}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function chatTypeName(type) {
+        return { SAVED: 'Saved Messages', DIRECT: 'Direct Chat', GROUP: 'Group Chat' }[type] || type;
+    }
+
+    async function openChat(chatId) {
+        currentChatId = chatId;
+        const chat = chats.find(c => c.id === chatId);
+
+        document.getElementById('no-chat').style.display = 'none';
+        const activeChat = document.getElementById('active-chat');
+        activeChat.style.display = 'flex';
+
+        document.getElementById('chat-title').textContent = chat?.title || chatTypeName(chat?.type);
+        document.getElementById('chat-meta').textContent = `ID: ${chatId} · Type: ${chat?.type} · Owner: ${shortUuid(chat?.owner_id)}`;
+
+        renderChatList();
+        await loadMessages();
+        await loadMembers();
+    }
+
+    // ── Messages ──
+
+    async function loadMessages() {
+        if (!currentChatId) return;
+        try {
+            const data = await api('GET', `/api/v1/chats/${currentChatId}/messages?size=100`);
+            messages = (data.content || []).reverse();
+            renderMessages();
+        } catch (e) {
+            toast('Failed to load messages: ' + e.message, 'error');
+        }
+    }
+
+    function renderMessages() {
+        const area = document.getElementById('messages-area');
+        if (messages.length === 0) {
+            area.innerHTML = '<div style="text-align: center; color: var(--text-muted); margin-top: 40px;">No messages yet. Say hi!</div>';
+            return;
+        }
+
+        area.innerHTML = messages.map(msg => {
+            const isOwn = msg.sender?.user_id === userId;
+            const edited = msg.updated_at && msg.updated_at !== msg.created_at;
+            return `
+                <div class="message ${isOwn ? 'own' : 'other'}" id="msg-${msg.id}">
+                    ${!isOwn ? `<div class="message-sender">${shortUuid(msg.sender?.user_id)}</div>` : ''}
+                    <div class="message-content">${escapeHtml(msg.content)}</div>
+                    <div class="message-time">
+                        ${formatTime(msg.created_at)}
+                        ${edited ? '<span class="message-edited"> (edited)</span>' : ''}
+                    </div>
+                    ${isOwn ? `
+                        <div class="message-actions">
+                            <button onclick="showEditMessageModal(${msg.id}, '${escapeAttr(msg.content)}')">edit</button>
+                            <button onclick="deleteMessage(${msg.id})">del</button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+
+        area.scrollTop = area.scrollHeight;
+    }
+
+    async function sendMessage() {
+        if (!currentChatId) return;
+        const input = document.getElementById('message-input');
+        const content = input.value.trim();
+        if (!content) return;
+
+        try {
+            input.value = '';
+            await api('POST', `/api/v1/chats/${currentChatId}/messages`, { content });
+        } catch (e) {
+            toast('Failed to send: ' + e.message, 'error');
+            input.value = content;
+        }
+    }
+
+    async function deleteMessage(messageId) {
+        if (!confirm('Delete this message?')) return;
+        try {
+            await api('DELETE', `/api/v1/chats/${currentChatId}/messages/${messageId}`);
+        } catch (e) {
+            toast('Failed to delete: ' + e.message, 'error');
+        }
+    }
+
+    async function editMessage() {
+        const messageId = document.getElementById('edit-message-id').value;
+        const content = document.getElementById('edit-message-content').value.trim();
+        if (!content) return;
+
+        try {
+            await api('PATCH', `/api/v1/chats/${currentChatId}/messages/${messageId}`, { content });
+            hideModal('edit-message-modal');
+        } catch (e) {
+            toast('Failed to edit: ' + e.message, 'error');
+        }
+    }
+
+    // ── Members ──
+
+    async function loadMembers() {
+        if (!currentChatId) return;
+        try {
+            const data = await api('GET', `/api/v1/chats/${currentChatId}/members?size=100`);
+            const members = data.content || [];
+            renderMembers(members);
+        } catch (e) {
+            toast('Failed to load members: ' + e.message, 'error');
+        }
+    }
+
+    function renderMembers(members) {
+        const list = document.getElementById('members-list');
+        list.innerHTML = members.map(m => `
+            <div class="member-item">
+                <span class="member-id" title="${m.user_id}">${shortUuid(m.user_id)}</span>
+                <span class="member-role ${m.role === 'OWNER' ? 'owner' : ''}">${m.role}</span>
+            </div>
+        `).join('');
+    }
+
+    async function inviteMember() {
+        const memberId = document.getElementById('invite-user-id').value.trim();
+        if (!memberId) return;
+
+        try {
+            await api('POST', `/api/v1/chats/${currentChatId}/members/${memberId}`);
+            hideModal('invite-member-modal');
+            await loadMembers();
+            toast('Member invited', 'success');
+        } catch (e) {
+            toast('Failed to invite: ' + e.message, 'error');
+        }
+    }
+
+    // ── Chat CRUD ──
+
+    async function createChat() {
+        const type = document.getElementById('new-chat-type').value;
+        const title = document.getElementById('new-chat-title').value.trim();
+        const membersRaw = document.getElementById('new-chat-members').value.trim();
+
+        const body = { type: type.toLowerCase() };
+        if (title) body.title = title;
+        if (membersRaw) body.member_ids = membersRaw.split(',').map(s => s.trim()).filter(Boolean);
+
+        try {
+            const chat = await api('POST', '/api/v1/chats', body);
+            hideModal('create-chat-modal');
+            await loadChats();
+            if (chat?.id) openChat(chat.id);
+            toast('Chat created', 'success');
+        } catch (e) {
+            toast('Failed to create chat: ' + e.message, 'error');
+        }
+    }
+
+    async function editChat() {
+        const title = document.getElementById('edit-chat-title').value.trim();
+        if (!title) return;
+
+        try {
+            await api('PATCH', `/api/v1/chats/${currentChatId}`, { title });
+            hideModal('edit-chat-modal');
+            await loadChats();
+            document.getElementById('chat-title').textContent = title;
+            toast('Chat updated', 'success');
+        } catch (e) {
+            toast('Failed to edit chat: ' + e.message, 'error');
+        }
+    }
+
+    async function deleteChat() {
+        if (!confirm('Delete this chat? This cannot be undone.')) return;
+        try {
+            await api('DELETE', `/api/v1/chats/${currentChatId}`);
+            currentChatId = null;
+            document.getElementById('active-chat').style.display = 'none';
+            document.getElementById('no-chat').style.display = '';
+            document.getElementById('members-panel').classList.remove('show');
+            await loadChats();
+            toast('Chat deleted', 'success');
+        } catch (e) {
+            toast('Failed to delete chat: ' + e.message, 'error');
+        }
+    }
+
+    // ── WebSocket Events ──
+
+    function handleEvent(event) {
+        logEvent(event.type, `chat=${event.chat_id} payload=${JSON.stringify(event.payload).substring(0, 80)}`);
+
+        switch (event.type) {
+            case 'MESSAGE_SENT':
+                if (event.chat_id === currentChatId) {
+                    messages.push(event.payload);
+                    renderMessages();
+                }
+                loadChats();
+                break;
+
+            case 'MESSAGE_EDITED':
+                if (event.chat_id === currentChatId) {
+                    const idx = messages.findIndex(m => m.id === event.payload.id);
+                    if (idx >= 0) messages[idx] = event.payload;
+                    renderMessages();
+                }
+                break;
+
+            case 'MESSAGE_DELETED':
+                if (event.chat_id === currentChatId) {
+                    messages = messages.filter(m => m.id !== event.payload);
+                    renderMessages();
+                }
+                break;
+
+            case 'MEMBER_JOINED':
+                if (event.chat_id === currentChatId) loadMembers();
+                loadChats();
+                break;
+
+            case 'MEMBER_LEFT':
+                if (event.chat_id === currentChatId) loadMembers();
+                loadChats();
+                break;
+        }
+    }
+
+    function logEvent(type, detail) {
+        const log = document.getElementById('events-log');
+        const time = new Date().toLocaleTimeString();
+        const entry = document.createElement('div');
+        entry.className = 'event-entry';
+        entry.innerHTML = `<span style="color: var(--text-muted)">${time}</span> <span class="event-type">${type}</span> ${escapeHtml(detail)}`;
+        log.appendChild(entry);
+        log.scrollTop = log.scrollHeight;
+    }
+
+    // ── Modals ──
+
+    function showCreateChatModal() {
+        document.getElementById('new-chat-title').value = '';
+        document.getElementById('new-chat-members').value = '';
+        document.getElementById('new-chat-type').value = 'GROUP';
+        onChatTypeChange();
+        showModal('create-chat-modal');
+    }
+
+    function showEditChatModal() {
+        const chat = chats.find(c => c.id === currentChatId);
+        document.getElementById('edit-chat-title').value = chat?.title || '';
+        showModal('edit-chat-modal');
+    }
+
+    function showEditMessageModal(messageId, content) {
+        document.getElementById('edit-message-id').value = messageId;
+        document.getElementById('edit-message-content').value = content;
+        showModal('edit-message-modal');
+    }
+
+    function showInviteMemberModal() {
+        document.getElementById('invite-user-id').value = '';
+        showModal('invite-member-modal');
+    }
+
+    function onChatTypeChange() {
+        const type = document.getElementById('new-chat-type').value;
+        document.getElementById('chat-title-field').style.display = type === 'GROUP' ? '' : 'none';
+        document.getElementById('chat-members-field').style.display = type === 'SAVED' ? 'none' : '';
+    }
+
+    function showModal(id) { document.getElementById(id).classList.add('show'); }
+    function hideModal(id) { document.getElementById(id).classList.remove('show'); }
+
+    function toggleMembers() {
+        document.getElementById('members-panel').classList.toggle('show');
+    }
+
+    // ── Utils ──
+
+    function escapeHtml(s) {
+        if (!s) return '';
+        const div = document.createElement('div');
+        div.textContent = s;
+        return div.innerHTML;
+    }
+
+    function escapeAttr(s) {
+        return (s || '').replace(/'/g, "\\'").replace(/\n/g, ' ');
+    }
+
+    function shortUuid(uuid) {
+        if (!uuid) return '?';
+        return uuid.substring(0, 8) + '...';
+    }
+
+    function formatTime(iso) {
+        if (!iso) return '';
+        return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function toast(msg, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const el = document.createElement('div');
+        el.className = `toast ${type}`;
+        el.textContent = msg;
+        container.appendChild(el);
+        setTimeout(() => el.remove(), 4000);
+    }
+
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) overlay.classList.remove('show');
+        });
+    });
+
+    // Load well-known users on startup
+    loadWellKnownUsers();
+</script>
+
+</body>
+</html>
