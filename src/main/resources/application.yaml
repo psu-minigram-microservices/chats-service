@@ -54,4 +54,4 @@ springdoc:
   swagger-ui:
     enabled: true
     operations-sorter: alpha
-    use-root-path: true
+    path: /docs/swagger

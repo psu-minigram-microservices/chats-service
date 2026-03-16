@@ -44,8 +44,8 @@ public class SecurityConfig {
                                 "/favicon.ico",
                                 "/ws/**",
                                 "/docs/openapi/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
+                                "/docs/swagger",
+                                "/docs/swagger-ui/**",
                                 "/webjars/**",
                                 "/error"
                         ).permitAll();
