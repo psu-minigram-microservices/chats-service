@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Slf4j
 @RestControllerAdvice
@@ -36,6 +37,15 @@ public class GlobalExceptionHandler {
                 .orElseGet(() -> new GenericErrorException(HttpStatus.BAD_REQUEST, "incorrect_field_value", "Request validation failed"));
 
         return ResponseEntity.status(error.getStatusCode()).body(error.constructModel());
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public @NonNull ResponseEntity<ErrorDto> handleNoResourceFoundException(@NonNull NoResourceFoundException ex) {
+        var resourcePath = ex.getResourcePath();
+        log.debug("Requested unknown resource: '{}'", resourcePath);
+
+        var error = new ErrorDto("resource_not_found", "Resource '%s' not found".formatted(resourcePath));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
     @ExceptionHandler(Exception.class)
