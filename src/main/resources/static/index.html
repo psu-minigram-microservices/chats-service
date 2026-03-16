@@ -1043,7 +1043,7 @@
             <input class="field-input" type="text" id="new-chat-title" placeholder="Chat name" maxlength="255">
         </div>
         <div id="chat-members-field">
-            <label class="field-label" for="new-chat-members">Member UUIDs</label>
+            <label class="field-label" id="chat-members-label" for="new-chat-members">Member UUIDs</label>
             <div class="user-quick-pick" id="create-chat-quick-pick"></div>
             <input class="field-input" type="text" id="new-chat-members" placeholder="uuid1, uuid2, ...">
         </div>
@@ -1531,8 +1531,13 @@
 
     function onChatTypeChange() {
         const t = document.getElementById('new-chat-type').value;
+        const isDirect = t === 'DIRECT';
         document.getElementById('chat-title-field').style.display = t === 'GROUP' ? '' : 'none';
         document.getElementById('chat-members-field').style.display = t === 'SAVED' ? 'none' : '';
+        document.getElementById('chat-members-label').textContent = isDirect ? 'Member UUID' : 'Member UUIDs';
+        document.getElementById('new-chat-members').placeholder = isDirect ? 'uuid' : 'uuid1, uuid2, ...';
+        document.getElementById('new-chat-members').value = '';
+        renderQuickPick('create-chat-quick-pick', isDirect ? 'set-member' : 'append');
     }
 
     function showModal(id) { document.getElementById(id).classList.add('show'); }
@@ -1552,6 +1557,8 @@
             const label = `User ${wellKnownUsers.indexOf(u) + 1}: ${u.user_id.substring(0, 8)}\u2026`;
             if (mode === 'append') {
                 return `<button type="button" class="user-quick-pick-btn" onclick="appendMember('${u.user_id}')">${label}</button>`;
+            } else if (mode === 'set-member') {
+                return `<button type="button" class="user-quick-pick-btn" onclick="setMember('${u.user_id}')">${label}</button>`;
             } else {
                 return `<button type="button" class="user-quick-pick-btn" onclick="setInviteUser('${u.user_id}')">${label}</button>`;
             }
@@ -1566,6 +1573,10 @@
             existing.push(uuid);
             input.value = existing.join(', ');
         }
+    }
+
+    function setMember(uuid) {
+        document.getElementById('new-chat-members').value = uuid;
     }
 
     function setInviteUser(uuid) {
