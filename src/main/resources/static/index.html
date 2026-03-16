@@ -1002,8 +1002,8 @@
                         <div class="chat-header-meta" id="chat-meta"></div>
                     </div>
                     <div class="chat-header-actions">
-                        <button class="btn btn-ghost btn-sm" onclick="toggleMembers()">Members</button>
-                        <button class="btn btn-ghost btn-sm" onclick="showEditChatModal()">Edit</button>
+                        <button class="btn btn-ghost btn-sm" id="btn-members" onclick="toggleMembers()">Members</button>
+                        <button class="btn btn-ghost btn-sm" id="btn-edit-chat" onclick="showEditChatModal()">Edit</button>
                         <button class="btn btn-danger-ghost btn-sm" onclick="deleteChat()">Delete</button>
                     </div>
                 </div>
@@ -1268,31 +1268,50 @@
             list.innerHTML = '<div class="chat-list-empty">No chats yet. Create one!</div>';
             return;
         }
-        list.innerHTML = chats.map(c => `
+        list.innerHTML = chats.map(c => {
+            const name = chatDisplayName(c);
+            const meta = c.type === 'group'
+                ? `${c.members ? c.members.length + ' members' : ''} &middot; #${c.id}`
+                : `#${c.id}`;
+            return `
             <div class="chat-item ${c.id === currentChatId ? 'active' : ''}" onclick="openChat(${c.id})">
                 <div class="chat-item-row">
-                    <span class="chat-item-title">${esc(c.title || typeName(c.type))}</span>
+                    <span class="chat-item-title">${esc(name)}</span>
                     <span class="chat-type-tag">${c.type}</span>
                 </div>
-                <div class="chat-item-meta">${c.members ? c.members.length + ' members' : ''} &middot; #${c.id}</div>
-            </div>
-        `).join('');
+                <div class="chat-item-meta">${meta}</div>
+            </div>`;
+        }).join('');
     }
 
-    function typeName(t) {
-        return { SAVED: 'Saved Messages', DIRECT: 'Direct Chat', GROUP: 'Group Chat' }[t] || t;
+    function chatDisplayName(chat) {
+        if (chat.type === 'saved') return 'Saved Messages';
+        if (chat.type === 'direct') {
+            const other = chat.members?.find(m => m.user_id !== userId);
+            return other ? other.user_id : 'Direct Chat';
+        }
+        return chat.title || 'Group Chat';
     }
 
     async function openChat(id) {
         currentChatId = id;
         const chat = chats.find(c => c.id === id);
+        const type = chat?.type;
+
         document.getElementById('no-chat').style.display = 'none';
         document.getElementById('active-chat').classList.add('show');
-        document.getElementById('chat-title').textContent = chat?.title || typeName(chat?.type);
-        document.getElementById('chat-meta').textContent = `#${id} \u00b7 ${chat?.type} \u00b7 owner: ${shortId(chat?.owner_id)}`;
+        document.getElementById('chat-title').textContent = chatDisplayName(chat);
+        document.getElementById('chat-meta').textContent = `#${id} \u00b7 ${type}`;
+
+        // Adapt header actions to chat type
+        const isGroup = type === 'group';
+        document.getElementById('btn-members').style.display = isGroup ? '' : 'none';
+        document.getElementById('btn-edit-chat').style.display = isGroup ? '' : 'none';
+        if (!isGroup) document.getElementById('members-panel').classList.remove('show');
+
         renderChatList();
         await loadMessages();
-        await loadMembers();
+        if (isGroup) await loadMembers();
     }
 
     // ── Messages ──
