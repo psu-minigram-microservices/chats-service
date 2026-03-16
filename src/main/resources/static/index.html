@@ -312,8 +312,8 @@
 
         /* ── Sidebar ── */
         .sidebar {
-            width: 340px;
-            min-width: 340px;
+            width: 420px;
+            min-width: 420px;
             background: var(--surface);
             backdrop-filter: var(--blur);
             -webkit-backdrop-filter: var(--blur);
@@ -328,6 +328,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 16px;
         }
 
         .sidebar-brand {
@@ -359,10 +360,10 @@
             font-family: var(--font-mono);
             font-size: 12px;
             color: var(--text-dim);
-            max-width: 100px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            min-width: 0;
         }
 
         .sidebar-actions {
@@ -417,7 +418,6 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 180px;
         }
 
         .chat-type-tag {
@@ -706,8 +706,8 @@
 
         /* ── Members Panel ── */
         .members-panel {
-            width: 270px;
-            min-width: 270px;
+            width: 380px;
+            min-width: 380px;
             background: var(--surface);
             backdrop-filter: var(--blur);
             -webkit-backdrop-filter: var(--blur);
@@ -746,6 +746,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 12px;
             margin-bottom: 2px;
             transition: background 0.15s;
         }
@@ -756,9 +757,10 @@
             font-family: var(--font-mono);
             font-size: 13px;
             color: var(--text-secondary);
-            max-width: 130px;
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
         }
 
         .member-role-tag {
@@ -1396,7 +1398,7 @@
     function renderMembers(members) {
         document.getElementById('members-list').innerHTML = members.map(m => `
             <div class="member-item">
-                <span class="member-uuid" title="${m.user_id}">${shortId(m.user_id)}</span>
+                <span class="member-uuid">${m.user_id}</span>
                 <span class="member-role-tag ${m.role === 'OWNER' ? 'owner' : ''}">${m.role}</span>
             </div>
         `).join('');
