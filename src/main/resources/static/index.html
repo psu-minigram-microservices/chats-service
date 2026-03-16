@@ -893,6 +893,32 @@
             to { opacity: 1; transform: translateX(0); }
         }
 
+        /* ── User Quick Pick ── */
+        .user-quick-pick {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+
+        .user-quick-pick-btn {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.25);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .user-quick-pick-btn:hover {
+            border-color: rgba(124,58,237,0.3);
+            background: rgba(124,58,237,0.08);
+            color: var(--text);
+        }
+
         /* ── Active chat container ── */
         #active-chat {
             display: none;
@@ -1016,6 +1042,7 @@
         </div>
         <div id="chat-members-field">
             <label class="field-label" for="new-chat-members">Member UUIDs</label>
+            <div class="user-quick-pick" id="create-chat-quick-pick"></div>
             <input class="field-input" type="text" id="new-chat-members" placeholder="uuid1, uuid2, ...">
         </div>
         <div class="modal-actions">
@@ -1043,6 +1070,7 @@
     <div class="modal">
         <h3>Invite Member</h3>
         <label class="field-label" for="invite-user-id">User UUID</label>
+        <div class="user-quick-pick" id="invite-quick-pick"></div>
         <input class="field-input" type="text" id="invite-user-id" placeholder="00000000-0000-0000-0000-000000000000">
         <div class="modal-actions">
             <button class="btn btn-ghost" onclick="hideModal('invite-member-modal')">Cancel</button>
@@ -1458,6 +1486,7 @@
         document.getElementById('new-chat-members').value = '';
         document.getElementById('new-chat-type').value = 'GROUP';
         onChatTypeChange();
+        renderQuickPick('create-chat-quick-pick', 'append');
         showModal('create-chat-modal');
     }
 
@@ -1475,6 +1504,7 @@
 
     function showInviteMemberModal() {
         document.getElementById('invite-user-id').value = '';
+        renderQuickPick('invite-quick-pick', 'set');
         showModal('invite-member-modal');
     }
 
@@ -1487,6 +1517,39 @@
     function showModal(id) { document.getElementById(id).classList.add('show'); }
     function hideModal(id) { document.getElementById(id).classList.remove('show'); }
     function toggleMembers() { document.getElementById('members-panel').classList.toggle('show'); }
+
+    // ── User Quick Pick ──
+
+    function renderQuickPick(containerId, mode) {
+        const container = document.getElementById(containerId);
+        if (!wellKnownUsers.length) { container.innerHTML = ''; return; }
+
+        const others = wellKnownUsers.filter(u => u.user_id !== userId);
+        if (!others.length) { container.innerHTML = ''; return; }
+
+        container.innerHTML = others.map((u, i) => {
+            const label = `User ${wellKnownUsers.indexOf(u) + 1}: ${u.user_id.substring(0, 8)}\u2026`;
+            if (mode === 'append') {
+                return `<button type="button" class="user-quick-pick-btn" onclick="appendMember('${u.user_id}')">${label}</button>`;
+            } else {
+                return `<button type="button" class="user-quick-pick-btn" onclick="setInviteUser('${u.user_id}')">${label}</button>`;
+            }
+        }).join('');
+    }
+
+    function appendMember(uuid) {
+        const input = document.getElementById('new-chat-members');
+        const current = input.value.trim();
+        const existing = current ? current.split(',').map(s => s.trim()) : [];
+        if (!existing.includes(uuid)) {
+            existing.push(uuid);
+            input.value = existing.join(', ');
+        }
+    }
+
+    function setInviteUser(uuid) {
+        document.getElementById('invite-user-id').value = uuid;
+    }
 
     // ── Utils ──
 
