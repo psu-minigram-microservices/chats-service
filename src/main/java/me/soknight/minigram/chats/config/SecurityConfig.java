@@ -2,6 +2,7 @@ package me.soknight.minigram.chats.config;
 
 import lombok.RequiredArgsConstructor;
 import me.soknight.minigram.chats.config.properties.JwtProperties;
+import me.soknight.minigram.chats.config.properties.SandboxProperties;
 import me.soknight.minigram.chats.security.JwtAuthenticationFilter;
 import org.jspecify.annotations.NonNull;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -16,11 +17,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableMethodSecurity
-@EnableConfigurationProperties(JwtProperties.class)
+@EnableConfigurationProperties({JwtProperties.class, SandboxProperties.class})
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final @NonNull JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final @NonNull SandboxProperties sandboxProperties;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) {
@@ -35,8 +37,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 // configure HTTP endpoints security
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
+                .authorizeHttpRequests(auth -> {
+                        auth.requestMatchers(
                                 "/",
                                 "/ws/**",
                                 "/docs/openapi/**",
@@ -44,9 +46,13 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/webjars/**",
                                 "/error"
-                        ).permitAll()
-                        .anyRequest().authenticated()
-                )
+                        ).permitAll();
+
+                        if (sandboxProperties.enabled())
+                            auth.requestMatchers("/api/v1/sandbox/**").permitAll();
+
+                        auth.anyRequest().authenticated();
+                })
 
                 // configure stateless JWT authentication
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

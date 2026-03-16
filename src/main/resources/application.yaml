@@ -31,6 +31,9 @@ server:
   jwt:
     secret: ${JWT_SECRET}
 
+  sandbox:
+    enabled: true
+
 logging:
   level:
     root: INFO
