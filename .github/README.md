@@ -44,7 +44,7 @@ docker compose up --build
 | URL                                                                  | Description                         |
 |----------------------------------------------------------------------|-------------------------------------|
 | [localhost:8080](http://localhost:8080)                              | Demo chat client (WebSocket + REST) |
-| [localhost:8080/docs/swagger](http://localhost:8080/docs/swagger-ui) | Swagger UI — interactive API docs   |
+| [localhost:8080/docs/swagger](http://localhost:8080/docs/swagger) | Swagger UI — interactive API docs   |
 
 ### Stop service
 
