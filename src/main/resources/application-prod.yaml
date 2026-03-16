@@ -4,6 +4,10 @@ spring:
     hibernate:
       ddl-auto: none
 
+server:
+  sandbox:
+    enabled: false
+
 logging:
   level:
     root: WARN
