@@ -2,10 +2,13 @@ package me.soknight.minigram.chats.controller;
 
 import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.attribute.ChatType;
+import me.soknight.minigram.chats.model.attribute.RelationStatus;
 import me.soknight.minigram.chats.model.request.CreateChatRequest;
 import me.soknight.minigram.chats.model.request.SendMessageRequest;
 import me.soknight.minigram.chats.service.ChatMessageService;
 import me.soknight.minigram.chats.service.ChatService;
+import me.soknight.minigram.chats.service.client.TestProfileRelationsClient;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,10 +22,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -37,6 +37,12 @@ class ChatMessageControllerApiTest {
     @Autowired MockMvc mockMvc;
     @Autowired ChatService chatService;
     @Autowired ChatMessageService messageService;
+    @Autowired TestProfileRelationsClient profileRelationsClient;
+
+    @BeforeEach
+    void resetRelations() {
+        profileRelationsClient.reset();
+    }
 
     @Test
     void sendMessage_returnsCreatedMessage() throws Exception {
@@ -70,6 +76,23 @@ class ChatMessageControllerApiTest {
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error_code").value("incorrect_field_value"));
+    }
+
+    @Test
+    void sendMessage_whenDirectRelationNotAccepted_returnsForbidden() throws Exception {
+        long chatId = createDirectChat();
+        profileRelationsClient.setStatus(USER_2, RelationStatus.BLOCKED);
+
+        mockMvc.perform(post("/api/v1/chats/{chatId}/messages", chatId)
+                        .with(authUser(USER_1))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "content": "hello"
+                                }
+                                """))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error_code").value("relation_not_accepted"));
     }
 
     @Test

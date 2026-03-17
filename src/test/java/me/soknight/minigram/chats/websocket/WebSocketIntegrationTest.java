@@ -3,6 +3,7 @@ package me.soknight.minigram.chats.websocket;
 import io.jsonwebtoken.Jwts;
 import me.soknight.minigram.chats.model.attribute.ChatType;
 import me.soknight.minigram.chats.model.request.CreateChatRequest;
+import me.soknight.minigram.chats.model.request.EditChatRequest;
 import me.soknight.minigram.chats.model.request.EditMessageRequest;
 import me.soknight.minigram.chats.model.request.SendMessageRequest;
 import me.soknight.minigram.chats.service.ChatMemberService;
@@ -76,6 +77,44 @@ class WebSocketIntegrationTest {
         if (stompClient != null) {
             stompClient.stop();
         }
+    }
+
+    @Test
+    void createChat_receivesChatCreatedEvent() throws Exception {
+        subscribeToEvents();
+
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
+
+        var event = pollEvent();
+        assertThat(event).isNotNull();
+        assertThat(event.get("type")).isEqualTo("CHAT_CREATED");
+        assertThat(((Number) event.get("chat_id")).longValue()).isEqualTo(chat.id());
+    }
+
+    @Test
+    void editChat_receivesChatUpdatedEvent() throws Exception {
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Original", List.of(USER_2)));
+        subscribeToEvents();
+
+        chatService.editChat(USER_1, chat.id(), new EditChatRequest("Updated"));
+
+        var event = pollEvent();
+        assertThat(event).isNotNull();
+        assertThat(event.get("type")).isEqualTo("CHAT_UPDATED");
+        assertThat(((Number) event.get("chat_id")).longValue()).isEqualTo(chat.id());
+    }
+
+    @Test
+    void deleteChat_receivesChatDeletedEvent() throws Exception {
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
+        subscribeToEvents();
+
+        chatService.deleteChat(USER_1, chat.id());
+
+        var event = pollEvent();
+        assertThat(event).isNotNull();
+        assertThat(event.get("type")).isEqualTo("CHAT_DELETED");
+        assertThat(((Number) event.get("chat_id")).longValue()).isEqualTo(chat.id());
     }
 
     @Test
@@ -213,6 +252,8 @@ class WebSocketIntegrationTest {
 
         return Jwts.builder()
                 .subject(userId.toString())
+                .issuer("Minigram")
+                .audience().add("MinigramClient").and()
                 .issuedAt(new Date())
                 .expiration(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
                 .signWith(key)

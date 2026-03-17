@@ -4,8 +4,11 @@ import jakarta.persistence.EntityManager;
 import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.attribute.ChatMemberRole;
 import me.soknight.minigram.chats.model.attribute.ChatType;
+import me.soknight.minigram.chats.model.attribute.RelationStatus;
 import me.soknight.minigram.chats.model.dto.ChatDto;
 import me.soknight.minigram.chats.model.request.CreateChatRequest;
+import me.soknight.minigram.chats.service.client.TestProfileRelationsClient;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,7 +32,13 @@ class ChatServiceTest {
     private static final UUID UNKNOWN_USER = UUID.fromString("00000000-0000-0000-0000-000000000999");
 
     @Autowired ChatService chatService;
+    @Autowired TestProfileRelationsClient profileRelationsClient;
     @Autowired EntityManager em;
+
+    @BeforeEach
+    void resetRelations() {
+        profileRelationsClient.reset();
+    }
 
     private void flushAndClear() {
         em.flush();
@@ -87,6 +96,22 @@ class ChatServiceTest {
         assertThatThrownBy(() -> chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, null, List.of(USER_2))))
                 .isInstanceOf(ApiException.class);
         assertThatThrownBy(() -> chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "  ", List.of(USER_2))))
+                .isInstanceOf(ApiException.class);
+    }
+
+    @Test
+    void createDirectChat_whenRelationNotAccepted_throws() {
+        profileRelationsClient.setStatus(USER_2, RelationStatus.BLOCKED);
+
+        assertThatThrownBy(() -> chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2))))
+                .isInstanceOf(ApiException.class);
+    }
+
+    @Test
+    void createGroupChat_whenMemberRelationNotAccepted_throws() {
+        profileRelationsClient.setStatus(USER_3, RelationStatus.PENDING);
+
+        assertThatThrownBy(() -> chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test Group", List.of(USER_2, USER_3))))
                 .isInstanceOf(ApiException.class);
     }
 

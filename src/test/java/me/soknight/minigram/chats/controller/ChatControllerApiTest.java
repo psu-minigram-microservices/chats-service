@@ -1,8 +1,11 @@
 package me.soknight.minigram.chats.controller;
 
 import me.soknight.minigram.chats.model.attribute.ChatType;
+import me.soknight.minigram.chats.model.attribute.RelationStatus;
 import me.soknight.minigram.chats.model.request.CreateChatRequest;
 import me.soknight.minigram.chats.service.ChatService;
+import me.soknight.minigram.chats.service.client.TestProfileRelationsClient;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,6 +36,12 @@ class ChatControllerApiTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired ChatService chatService;
+    @Autowired TestProfileRelationsClient profileRelationsClient;
+
+    @BeforeEach
+    void resetRelations() {
+        profileRelationsClient.reset();
+    }
 
     @Test
     void createChat_returnsCreatedChat() throws Exception {
@@ -67,6 +76,41 @@ class ChatControllerApiTest {
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error_code").value("incorrect_field_value"));
+    }
+
+    @Test
+    void createDirectChat_whenRelationNotAccepted_returnsForbidden() throws Exception {
+        profileRelationsClient.setStatus(USER_2, RelationStatus.REJECTED);
+
+        mockMvc.perform(post("/api/v1/chats")
+                        .with(authUser(USER_1))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "type": "direct",
+                                  "member_ids": ["%s"]
+                                }
+                                """.formatted(USER_2)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error_code").value("relation_not_accepted"));
+    }
+
+    @Test
+    void createGroupChat_whenAnyMemberRelationNotAccepted_returnsForbidden() throws Exception {
+        profileRelationsClient.setStatus(USER_3, RelationStatus.BLOCKED);
+
+        mockMvc.perform(post("/api/v1/chats")
+                        .with(authUser(USER_1))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "type": "group",
+                                  "title": "Team Chat",
+                                  "member_ids": ["%s", "%s"]
+                                }
+                                """.formatted(USER_2, USER_3)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error_code").value("relation_not_accepted"));
     }
 
     @Test
