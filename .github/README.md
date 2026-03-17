@@ -10,10 +10,6 @@
 ### Prerequisites
 
 - Docker & Docker Compose
-- External Docker network `minigram`:
-  ```bash
-  docker network create minigram
-  ```
 
 ### Configuration
 
