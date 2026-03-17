@@ -33,6 +33,9 @@ server:
     issuer: ${JWT_ISSUER:Minigram}
     audience: ${JWT_AUDIENCE:MinigramClient}
 
+  services:
+    profile: ${PROFILE_SERVICE_URL:http://profile-service:5000}
+
 logging:
   level:
     root: INFO
