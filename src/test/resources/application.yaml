@@ -16,3 +16,8 @@ spring:
 server:
   jwt:
     secret: test-jwt-secret-key-that-is-long-enough-for-hmac-sha256-algorithm
+    issuer: Minigram
+    audience: MinigramClient
+
+  services:
+    profile: http://localhost:5001
