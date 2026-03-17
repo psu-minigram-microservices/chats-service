@@ -34,9 +34,6 @@ server:
     audience: ${JWT_AUDIENCE:MinigramClient}
     expiration: ${JWT_EXPIRATION:15}
 
-  sandbox:
-    enabled: true
-
 logging:
   level:
     root: INFO
@@ -57,4 +54,4 @@ springdoc:
   swagger-ui:
     enabled: true
     operations-sorter: alpha
-    path: /docs/swagger
+    use-root-path: on
