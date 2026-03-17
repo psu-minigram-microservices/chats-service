@@ -12,11 +12,8 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
-import java.util.UUID;
 
 @Component
 public class JwtTokenProvider {
@@ -36,18 +33,6 @@ public class JwtTokenProvider {
         this.issuer = properties.issuer();
         this.audience = properties.audience();
         this.expirationTimeMinutes = properties.expiration();
-    }
-
-    public @NonNull String generateToken(@NonNull UUID userId) {
-        var now = Instant.now();
-        return Jwts.builder()
-                .subject(userId.toString())
-                .issuer(issuer)
-                .audience().add(audience).and()
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plus(Duration.ofMinutes(expirationTimeMinutes))))
-                .signWith(secretKey)
-                .compact();
     }
 
     public @NonNull Optional<Claims> parseToken(@NonNull String token) {
