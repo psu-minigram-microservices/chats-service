@@ -11,9 +11,9 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,7 +29,7 @@ public class JwtTokenProvider {
     private final int expirationTimeMinutes;
 
     public JwtTokenProvider(@NonNull JwtProperties properties) {
-        var keyBytes = Base64.getDecoder().decode(properties.secret());
+        var keyBytes = properties.secret().getBytes(StandardCharsets.UTF_8);
         this.secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
         this.jwtParser = Jwts.parser().verifyWith(secretKey).build();
 
