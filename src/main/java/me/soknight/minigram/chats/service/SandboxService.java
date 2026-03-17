@@ -7,7 +7,6 @@ import me.soknight.minigram.chats.security.JwtTokenProvider;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +20,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class SandboxService {
 
     private static final int WELL_KNOWN_USERS_COUNT = 10;
-    private static final @NonNull Duration WELL_KNOWN_USERS_TOKEN_TTL = Duration.ofMinutes(20L);
 
     private final @NonNull Map<UUID, String> wellKnownUsers = new HashMap<>();
     private final @NonNull ReadWriteLock wellKnownUsersLock = new ReentrantReadWriteLock();
@@ -60,7 +58,7 @@ public class SandboxService {
     private void generateWellKnownUsers() {
         for (int i = 0; i < WELL_KNOWN_USERS_COUNT; i++) {
             var uuid = UUID.randomUUID();
-            var token = jwtTokenProvider.generateToken(uuid, WELL_KNOWN_USERS_TOKEN_TTL);
+            var token = jwtTokenProvider.generateToken(uuid);
             wellKnownUsers.put(uuid, token);
         }
     }

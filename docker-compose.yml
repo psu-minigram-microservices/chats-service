@@ -11,12 +11,15 @@ services:
         condition: service_healthy
     environment:
       JWT_SECRET: ${JWT_SECRET}
-      SPRING_PROFILES_ACTIVE: ${CHATS_SPRING_PROFILES:-pg}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
       DB_HOST: postgres-chats
       DB_PORT: ${CHATS_DB_PORT:-5432}
       DB_NAME: ${CHATS_DB_NAME:-minigram_chats}
-      DB_USERNAME: ${CHATS_DB_USERNAME:-minigram}
+      DB_USERNAME: ${CHATS_DB_USER:-minigram}
       DB_PASSWORD: ${CHATS_DB_PASSWORD:-minigram}
+      SPRING_PROFILES_ACTIVE: ${CHATS_SPRING_PROFILES:-pg}
     ports:
       - "${CHATS_SERVICE_PORT:-8080}:8080"
     networks:
@@ -28,7 +31,7 @@ services:
     container_name: minigram-postgres-chats
     environment:
       POSTGRES_DB: ${CHATS_DB_NAME:-minigram_chats}
-      POSTGRES_USER: ${CHATS_DB_USERNAME:-minigram}
+      POSTGRES_USER: ${CHATS_DB_USER:-minigram}
       POSTGRES_PASSWORD: ${CHATS_DB_PASSWORD:-minigram}
     ports:
       - "${CHATS_DB_PORT:-5432}:5432"

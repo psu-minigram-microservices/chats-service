@@ -34,7 +34,7 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
         if (token == null) return false;
 
         var claims = jwtTokenProvider.parseToken(token).orElse(null);
-        if (claims == null) return false;
+        if (claims == null || !jwtTokenProvider.validateClaims(claims)) return false;
 
         var userId = claims.getSubject();
         if (userId == null || userId.isBlank()) return false;
