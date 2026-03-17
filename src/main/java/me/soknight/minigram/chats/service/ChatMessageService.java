@@ -2,7 +2,9 @@ package me.soknight.minigram.chats.service;
 
 import lombok.AllArgsConstructor;
 import me.soknight.minigram.chats.exception.ApiException;
+import me.soknight.minigram.chats.model.attribute.RelationStatus;
 import me.soknight.minigram.chats.model.dto.ChatMessageDto;
+import me.soknight.minigram.chats.model.entity.ChatEntity;
 import me.soknight.minigram.chats.model.entity.ChatMemberEntity;
 import me.soknight.minigram.chats.model.entity.ChatMessageEntity;
 import me.soknight.minigram.chats.model.entity.ChatMessageId;
@@ -12,6 +14,7 @@ import me.soknight.minigram.chats.model.websocket.ChatEvent;
 import me.soknight.minigram.chats.repository.ChatMemberRepository;
 import me.soknight.minigram.chats.repository.ChatMessageRepository;
 import me.soknight.minigram.chats.repository.ChatRepository;
+import me.soknight.minigram.chats.service.client.ProfileRelationsClient;
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +32,7 @@ public class ChatMessageService {
     private final @NonNull ChatRepository chatRepository;
     private final @NonNull ChatMemberRepository chatMemberRepository;
     private final @NonNull ChatMessageRepository chatMessageRepository;
+    private final @NonNull ProfileRelationsClient profileRelationsClient;
     private final @NonNull ChatEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
@@ -62,6 +66,7 @@ public class ChatMessageService {
             @NonNull SendMessageRequest request
     ) throws ApiException {
         var sender = getMember(chatId, senderId);
+        validateMessageSending(senderId, sender.getChat());
 
         chatRepository.incrementMessageSequence(chatId);
         long messageId = chatRepository.getMessageSequence(chatId);
@@ -103,6 +108,33 @@ public class ChatMessageService {
 
         eventPublisher.publish(chatId, ChatEvent.messageDeleted(chatId, messageId));
         return dto;
+    }
+
+    private void validateMessageSending(UUID senderId, @NonNull ChatEntity chat) throws ApiException {
+        if (!chat.isDirect()) return;
+
+        var receiverId = chat.getMembers().stream()
+                .map(ChatMemberEntity::getUserId)
+                .filter(userId -> !userId.equals(senderId))
+                .findFirst()
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.CONFLICT,
+                        "invalid_chat_members",
+                        "Direct chat must contain exactly one additional member"
+                ));
+
+        var relation = profileRelationsClient.getRelation(receiverId);
+        var status = relation.status();
+
+        if (status == RelationStatus.ACCEPTED) return;
+
+        throw new ApiException(
+                HttpStatus.FORBIDDEN,
+                "relation_not_accepted",
+                "Cannot send messages to user {0} because relation status is {1}",
+                receiverId,
+                status == null ? "null" : status.getKey()
+        );
     }
 
     private @NonNull ChatMemberEntity getMember(long chatId, UUID userId) throws ApiException {

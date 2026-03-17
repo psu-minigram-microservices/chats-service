@@ -4,12 +4,16 @@ import lombok.AllArgsConstructor;
 import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.attribute.ChatMemberRole;
 import me.soknight.minigram.chats.model.attribute.ChatType;
+import me.soknight.minigram.chats.model.attribute.RelationStatus;
 import me.soknight.minigram.chats.model.dto.ChatDto;
+import me.soknight.minigram.chats.model.dto.ChatMemberDto;
 import me.soknight.minigram.chats.model.entity.ChatEntity;
 import me.soknight.minigram.chats.model.entity.ChatMemberEntity;
 import me.soknight.minigram.chats.model.request.CreateChatRequest;
 import me.soknight.minigram.chats.model.request.EditChatRequest;
+import me.soknight.minigram.chats.model.websocket.ChatEvent;
 import me.soknight.minigram.chats.repository.ChatRepository;
+import me.soknight.minigram.chats.service.client.ProfileRelationsClient;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
@@ -27,6 +31,8 @@ import java.util.UUID;
 public class ChatService {
 
     private final @NonNull ChatRepository chatRepository;
+    private final @NonNull ProfileRelationsClient profileRelationsClient;
+    private final @NonNull ChatEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public @NonNull Page<ChatDto> getChats(UUID userId, @NonNull Pageable pageable) {
@@ -56,7 +62,9 @@ public class ChatService {
         for (UUID memberId : memberIds)
             chat.getMembers().add(new ChatMemberEntity(chat, memberId, ChatMemberRole.MEMBER));
 
-        return ChatDto.fromEntity(chatRepository.save(chat));
+        var dto = ChatDto.fromEntity(chatRepository.save(chat));
+        eventPublisher.publish(dto.id(), ChatEvent.chatCreated(dto));
+        return dto;
     }
 
     @Transactional
@@ -74,7 +82,9 @@ public class ChatService {
             chat.updateTitle(title);
         }
 
-        return ChatDto.fromEntity(chat);
+        var dto = ChatDto.fromEntity(chat);
+        eventPublisher.publish(dto.id(), ChatEvent.chatUpdated(dto));
+        return dto;
     }
 
     @Transactional
@@ -85,7 +95,12 @@ public class ChatService {
             throw new ApiException(HttpStatus.FORBIDDEN, "access_denied", "Only chat owner can delete the chat");
 
         var dto = ChatDto.fromEntity(chat);
+        var memberUserIds = dto.members().stream()
+                .map(ChatMemberDto::userId)
+                .toList();
+
         chatRepository.delete(chat);
+        eventPublisher.publishToUsers(memberUserIds, ChatEvent.chatDeleted(dto));
         return dto;
     }
 
@@ -121,6 +136,8 @@ public class ChatService {
                             "invalid_chat_members",
                             "Direct chat must contain exactly one additional member"
                     );
+
+                validateAcceptedRelations(memberIds, "Direct chat can be created only with friends");
             }
 
             case GROUP -> {
@@ -130,7 +147,27 @@ public class ChatService {
                             "invalid_chat_title",
                             "Group chat title must not be blank"
                     );
+
+                validateAcceptedRelations(memberIds, "Only friends can be added to a group chat");
             }
+        }
+    }
+
+    private void validateAcceptedRelations(@NonNull Set<UUID> memberIds, @NonNull String message) throws ApiException {
+        for (UUID memberId : memberIds) {
+            var relation = profileRelationsClient.getRelation(memberId);
+            var status = relation.status();
+
+            if (status == RelationStatus.ACCEPTED) continue;
+
+            throw new ApiException(
+                    HttpStatus.FORBIDDEN,
+                    "relation_not_accepted",
+                    "{0} Relation status with user {1} is {2}",
+                    message,
+                    memberId,
+                    status == null ? "null" : status.getKey()
+            );
         }
     }
 
