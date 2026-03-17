@@ -1,11 +1,11 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Minigram.Auth",
-    "version": "1.0"
+    "title": "Minigram.Auth API",
+    "version": "v1"
   },
   "paths": {
-    "/Auth/Login": {
+    "/api/v1/auth/login": {
       "post": {
         "tags": [
           "Auth"
@@ -58,7 +58,7 @@
         }
       }
     },
-    "/Auth/Register": {
+    "/api/v1/auth/register": {
       "post": {
         "tags": [
           "Auth"
@@ -111,7 +111,7 @@
         }
       }
     },
-    "/Auth/Logout": {
+    "/api/v1/auth/logout": {
       "post": {
         "tags": [
           "Auth"
@@ -123,7 +123,7 @@
         }
       }
     },
-    "/Auth/Refresh": {
+    "/api/v1/auth/refresh": {
       "post": {
         "tags": [
           "Auth"
@@ -228,7 +228,6 @@
       "RegisterRequestDto": {
         "required": [
           "email",
-          "name",
           "password"
         ],
         "type": "object",
@@ -237,15 +236,6 @@
             "minLength": 1,
             "type": "string",
             "format": "email"
-          },
-          "name": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "photoUrl": {
-            "type": "string",
-            "format": "uri",
-            "nullable": true
           },
           "password": {
             "minLength": 1,

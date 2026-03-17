@@ -1,11 +1,11 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Minigram.Profile",
-    "version": "1.0"
+    "title": "Minigram.Profile API",
+    "version": "v1"
   },
   "paths": {
-    "/profiles": {
+    "/api/v1/profiles": {
       "get": {
         "tags": [
           "Profile"
@@ -166,7 +166,7 @@
         }
       }
     },
-    "/profiles/me": {
+    "/api/v1/profiles/me": {
       "get": {
         "tags": [
           "Profile"
@@ -195,7 +195,7 @@
         }
       }
     },
-    "/profiles/{userId}": {
+    "/api/v1/profiles/{userId}": {
       "get": {
         "tags": [
           "Profile"
@@ -235,7 +235,7 @@
         }
       }
     },
-    "/profiles/relations": {
+    "/api/v1/profiles/relations": {
       "get": {
         "tags": [
           "Relation"
@@ -289,14 +289,14 @@
         }
       }
     },
-    "/profiles/relations/{recieverId}": {
+    "/api/v1/profiles/relations/{receiverId}": {
       "get": {
         "tags": [
           "Relation"
         ],
         "parameters": [
           {
-            "name": "recieverId",
+            "name": "receiverId",
             "in": "path",
             "required": true,
             "schema": {
@@ -334,7 +334,7 @@
         ],
         "parameters": [
           {
-            "name": "recieverId",
+            "name": "receiverId",
             "in": "path",
             "required": true,
             "schema": {
@@ -362,7 +362,7 @@
         ],
         "parameters": [
           {
-            "name": "recieverId",
+            "name": "receiverId",
             "in": "path",
             "required": true,
             "schema": {
@@ -491,8 +491,20 @@
         ],
         "type": "string"
       }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "scheme": "Bearer",
+        "bearerFormat": "JWT"
+      }
     }
   },
+  "security": [
+    {
+      "Bearer": [ ]
+    }
+  ],
   "tags": [
     {
       "name": "Profile"
