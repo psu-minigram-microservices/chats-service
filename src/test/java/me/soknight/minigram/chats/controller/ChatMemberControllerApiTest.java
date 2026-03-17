@@ -1,8 +1,11 @@
 package me.soknight.minigram.chats.controller;
 
 import me.soknight.minigram.chats.model.attribute.ChatType;
+import me.soknight.minigram.chats.model.attribute.RelationStatus;
 import me.soknight.minigram.chats.model.request.CreateChatRequest;
 import me.soknight.minigram.chats.service.ChatService;
+import me.soknight.minigram.chats.service.client.TestProfileRelationsClient;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,9 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -32,6 +33,12 @@ class ChatMemberControllerApiTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired ChatService chatService;
+    @Autowired TestProfileRelationsClient profileRelationsClient;
+
+    @BeforeEach
+    void resetRelations() {
+        profileRelationsClient.reset();
+    }
 
     @Test
     void inviteUser_toGroupChat_returnsMember() throws Exception {
@@ -52,6 +59,17 @@ class ChatMemberControllerApiTest {
                         .with(authUser(USER_1)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error_code").value("chat_invite_not_supported"));
+    }
+
+    @Test
+    void inviteUser_whenRelationNotAccepted_returnsForbidden() throws Exception {
+        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
+        profileRelationsClient.setStatus(USER_3, RelationStatus.PENDING);
+
+        mockMvc.perform(post("/api/v1/chats/{chatId}/members/{userId}", chat.id(), USER_3)
+                        .with(authUser(USER_1)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error_code").value("relation_not_accepted"));
     }
 
     @Test

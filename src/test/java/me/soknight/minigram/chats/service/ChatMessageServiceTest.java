@@ -3,10 +3,13 @@ package me.soknight.minigram.chats.service;
 import jakarta.persistence.EntityManager;
 import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.attribute.ChatType;
+import me.soknight.minigram.chats.model.attribute.RelationStatus;
 import me.soknight.minigram.chats.model.dto.ChatDto;
 import me.soknight.minigram.chats.model.request.CreateChatRequest;
 import me.soknight.minigram.chats.model.request.EditMessageRequest;
 import me.soknight.minigram.chats.model.request.SendMessageRequest;
+import me.soknight.minigram.chats.service.client.TestProfileRelationsClient;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,7 +33,13 @@ class ChatMessageServiceTest {
 
     @Autowired ChatMessageService messageService;
     @Autowired ChatService chatService;
+    @Autowired TestProfileRelationsClient profileRelationsClient;
     @Autowired EntityManager em;
+
+    @BeforeEach
+    void resetRelations() {
+        profileRelationsClient.reset();
+    }
 
     private void flushAndClear() {
         em.flush();
@@ -88,6 +97,15 @@ class ChatMessageServiceTest {
         var message = messageService.sendMessage(USER_1, chat.id(), new SendMessageRequest("  hello  "));
 
         assertThat(message.content()).isEqualTo("hello");
+    }
+
+    @Test
+    void sendMessage_whenDirectRelationNotAccepted_throws() throws ApiException {
+        var chat = createDirectChat();
+        profileRelationsClient.setStatus(USER_2, RelationStatus.BLOCKED);
+
+        assertThatThrownBy(() -> messageService.sendMessage(USER_1, chat.id(), new SendMessageRequest("Hello!")))
+                .isInstanceOf(ApiException.class);
     }
 
     // --- editMessage ---

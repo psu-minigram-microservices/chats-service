@@ -4,8 +4,11 @@ import jakarta.persistence.EntityManager;
 import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.attribute.ChatMemberRole;
 import me.soknight.minigram.chats.model.attribute.ChatType;
+import me.soknight.minigram.chats.model.attribute.RelationStatus;
 import me.soknight.minigram.chats.model.dto.ChatDto;
 import me.soknight.minigram.chats.model.request.CreateChatRequest;
+import me.soknight.minigram.chats.service.client.TestProfileRelationsClient;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,7 +33,13 @@ class ChatMemberServiceTest {
 
     @Autowired ChatService chatService;
     @Autowired ChatMemberService chatMemberService;
+    @Autowired TestProfileRelationsClient profileRelationsClient;
     @Autowired EntityManager em;
+
+    @BeforeEach
+    void resetRelations() {
+        profileRelationsClient.reset();
+    }
 
     private void flushAndClear() {
         em.flush();
@@ -116,6 +125,15 @@ class ChatMemberServiceTest {
         var chat = createGroup(USER_1, USER_2);
 
         assertThatThrownBy(() -> chatMemberService.inviteUser(USER_1, chat.id(), USER_2))
+                .isInstanceOf(ApiException.class);
+    }
+
+    @Test
+    void inviteUser_whenRelationNotAccepted_throws() throws ApiException {
+        var chat = createGroup(USER_1, USER_2);
+        profileRelationsClient.setStatus(USER_3, RelationStatus.BLOCKED);
+
+        assertThatThrownBy(() -> chatMemberService.inviteUser(USER_1, chat.id(), USER_3))
                 .isInstanceOf(ApiException.class);
     }
 
