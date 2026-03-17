@@ -5,8 +5,6 @@
  </div>
 </div>
 
-## Deployment
-
 ### Prerequisites
 
 - Docker & Docker Compose
