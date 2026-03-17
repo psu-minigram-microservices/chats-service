@@ -32,7 +32,6 @@ server:
     secret: ${JWT_SECRET}
     issuer: ${JWT_ISSUER:Minigram}
     audience: ${JWT_AUDIENCE:MinigramClient}
-    expiration: ${JWT_EXPIRATION:15}
 
 logging:
   level:

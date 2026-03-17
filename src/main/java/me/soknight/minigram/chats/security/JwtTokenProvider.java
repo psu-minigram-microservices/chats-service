@@ -9,7 +9,6 @@ import me.soknight.minigram.chats.config.properties.JwtProperties;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -18,21 +17,18 @@ import java.util.Optional;
 @Component
 public class JwtTokenProvider {
 
-    private final @NonNull SecretKey secretKey;
     private final @NonNull JwtParser jwtParser;
 
     private final @NonNull String issuer;
     private final @NonNull String audience;
-    private final int expirationTimeMinutes;
 
     public JwtTokenProvider(@NonNull JwtProperties properties) {
         var keyBytes = properties.secret().getBytes(StandardCharsets.UTF_8);
-        this.secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
+        var secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
         this.jwtParser = Jwts.parser().verifyWith(secretKey).build();
 
         this.issuer = properties.issuer();
         this.audience = properties.audience();
-        this.expirationTimeMinutes = properties.expiration();
     }
 
     public @NonNull Optional<Claims> parseToken(@NonNull String token) {
