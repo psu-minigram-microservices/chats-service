@@ -3,12 +3,14 @@ package me.soknight.minigram.chats.service;
 import lombok.AllArgsConstructor;
 import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.attribute.ChatMemberRole;
+import me.soknight.minigram.chats.model.attribute.RelationStatus;
 import me.soknight.minigram.chats.model.dto.ChatMemberDto;
 import me.soknight.minigram.chats.model.entity.ChatEntity;
 import me.soknight.minigram.chats.model.entity.ChatMemberEntity;
 import me.soknight.minigram.chats.model.websocket.ChatEvent;
 import me.soknight.minigram.chats.repository.ChatMemberRepository;
 import me.soknight.minigram.chats.repository.ChatRepository;
+import me.soknight.minigram.chats.service.client.ProfileRelationsClient;
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +28,7 @@ public class ChatMemberService {
     private final @NonNull ChatRepository chatRepository;
     private final @NonNull ChatMemberRepository chatMemberRepository;
     private final @NonNull ChatService chatService;
+    private final @NonNull ProfileRelationsClient profileRelationsClient;
     private final @NonNull ChatEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
@@ -53,6 +56,8 @@ public class ChatMemberService {
 
         if (chatMemberRepository.existsById(chatId, invitedUserId))
             throw new ApiException(HttpStatus.CONFLICT, "member_already_exists", "User {0} is already in chat", invitedUserId);
+
+        validateAcceptedRelation(invitedUserId);
 
         var member = new ChatMemberEntity(chat, invitedUserId, ChatMemberRole.MEMBER);
         chatMemberRepository.save(member);
@@ -104,6 +109,21 @@ public class ChatMemberService {
 
         eventPublisher.publish(chatId, ChatEvent.memberLeft(chatId, userId));
         return dto;
+    }
+
+    private void validateAcceptedRelation(UUID invitedUserId) throws ApiException {
+        var relation = profileRelationsClient.getRelation(invitedUserId);
+        var status = relation.status();
+
+        if (status == RelationStatus.ACCEPTED) return;
+
+        throw new ApiException(
+                HttpStatus.FORBIDDEN,
+                "relation_not_accepted",
+                "Cannot invite user {0} because relation status is {1}",
+                invitedUserId,
+                status == null ? "null" : status.getKey()
+        );
     }
 
     private @NonNull ChatMemberEntity getExistingMember(long chatId, UUID userId) throws ApiException {
