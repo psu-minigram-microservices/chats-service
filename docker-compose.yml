@@ -1,6 +1,31 @@
+version: '3.8'
+
+name: minigram
+
 services:
-  chats-postgres:
+  chats-service:
+    build: .
+    container_name: minigram-chats-service
+    depends_on:
+      postgres-chats:
+        condition: service_healthy
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      SPRING_PROFILES_ACTIVE: ${CHATS_SPRING_PROFILES:-pg}
+      DB_HOST: postgres-chats
+      DB_PORT: ${CHATS_DB_PORT:-5432}
+      DB_NAME: ${CHATS_DB_NAME:-minigram_chats}
+      DB_USERNAME: ${CHATS_DB_USERNAME:-minigram}
+      DB_PASSWORD: ${CHATS_DB_PASSWORD:-minigram}
+    ports:
+      - "${CHATS_SERVICE_PORT:-8080}:8080"
+    networks:
+      - minigram
+    restart: unless-stopped
+
+  postgres-chats:
     image: postgres:18.3
+    container_name: minigram-postgres-chats
     environment:
       POSTGRES_DB: ${CHATS_DB_NAME:-minigram_chats}
       POSTGRES_USER: ${CHATS_DB_USERNAME:-minigram}
@@ -8,36 +33,18 @@ services:
     ports:
       - "${CHATS_DB_PORT:-5432}:5432"
     volumes:
-      - chats-pgdata:/var/lib/postgresql
+      - postgres_chats_data:/var/lib/postgresql
+    networks:
+      - minigram
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${CHATS_DB_USERNAME:-minigram} -d ${CHATS_DB_NAME:-minigram_chats}"]
       interval: 5s
       timeout: 3s
       retries: 5
-    networks:
-      - minigram
-
-  chats-service:
-    build: .
-    ports:
-      - "${CHATS_SERVER_PORT:-8080}:8080"
-    environment:
-      JWT_SECRET: ${JWT_SECRET}
-      SPRING_PROFILES_ACTIVE: ${CHATS_SPRING_PROFILES:-pg}
-      DB_HOST: chats-postgres
-      DB_PORT: ${CHATS_DB_PORT:-5432}
-      DB_NAME: ${CHATS_DB_NAME:-minigram_chats}
-      DB_USERNAME: ${CHATS_DB_USERNAME:-minigram}
-      DB_PASSWORD: ${CHATS_DB_PASSWORD:-minigram}
-    depends_on:
-      chats-postgres:
-        condition: service_healthy
-    networks:
-      - minigram
+    restart: unless-stopped
 
 volumes:
-  chats-pgdata:
+  postgres_chats_data:
 
 networks:
   minigram:
-    external: true
