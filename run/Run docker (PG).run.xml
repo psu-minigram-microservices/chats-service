@@ -8,7 +8,6 @@
             <option value="$PROJECT_DIR$\.env" />
           </list>
         </option>
-        <option name="commandLineOptions" value="--build" />
         <option name="sourceFilePath" value="docker-compose.yml" />
       </settings>
     </deployment>
