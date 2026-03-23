@@ -57,7 +57,7 @@ class ChatMemberControllerApiTest {
     @Test
     void inviteUser_toGroupChat_returnsMember() throws Exception {
         runAs(USER_1);
-        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
 
         mockMvc.perform(post("/api/v1/chats/{chatId}/members/{userId}", chat.id(), USER_3)
                         .with(authUser(USER_1)))
@@ -71,7 +71,7 @@ class ChatMemberControllerApiTest {
     @Test
     void inviteUser_toDirectChat_returnsConflict() throws Exception {
         runAs(USER_1);
-        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
 
         mockMvc.perform(post("/api/v1/chats/{chatId}/members/{userId}", chat.id(), USER_3)
                         .with(authUser(USER_1)))
@@ -82,7 +82,7 @@ class ChatMemberControllerApiTest {
     @Test
     void inviteUser_whenRelationNotAccepted_returnsForbidden() throws Exception {
         runAs(USER_1);
-        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
         profileClient.setStatus(USER_3, RelationStatus.NONE);
 
         mockMvc.perform(post("/api/v1/chats/{chatId}/members/{userId}", chat.id(), USER_3)
@@ -94,7 +94,7 @@ class ChatMemberControllerApiTest {
     @Test
     void getMembers_returnsMembersPage() throws Exception {
         runAs(USER_1);
-        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2, USER_3)));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2, USER_3)));
 
         mockMvc.perform(get("/api/v1/chats/{chatId}/members", chat.id())
                         .with(authUser(USER_1)))
@@ -106,7 +106,7 @@ class ChatMemberControllerApiTest {
     @Test
     void getMemberMe_returnsCurrentUser() throws Exception {
         runAs(USER_1);
-        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
 
         mockMvc.perform(get("/api/v1/chats/{chatId}/members/me", chat.id())
                         .with(authUser(USER_1)))
@@ -120,7 +120,7 @@ class ChatMemberControllerApiTest {
     @Test
     void getMemberById_returnsMember() throws Exception {
         runAs(USER_1);
-        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
 
         mockMvc.perform(get("/api/v1/chats/{chatId}/members/{memberId}", chat.id(), USER_2)
                         .with(authUser(USER_1)))
@@ -134,7 +134,7 @@ class ChatMemberControllerApiTest {
     @Test
     void leaveChat_returnsMember() throws Exception {
         runAs(USER_1);
-        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
 
         mockMvc.perform(delete("/api/v1/chats/{chatId}/members/me", chat.id())
                         .with(authUser(USER_2)))
@@ -145,7 +145,7 @@ class ChatMemberControllerApiTest {
     @Test
     void leaveChat_owner_returnsConflict() throws Exception {
         runAs(USER_1);
-        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
 
         mockMvc.perform(delete("/api/v1/chats/{chatId}/members/me", chat.id())
                         .with(authUser(USER_1)))
@@ -156,7 +156,7 @@ class ChatMemberControllerApiTest {
     @Test
     void kickUser_returnsMember() throws Exception {
         runAs(USER_1);
-        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2, USER_3)));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2, USER_3)));
 
         mockMvc.perform(delete("/api/v1/chats/{chatId}/members/{memberId}", chat.id(), USER_2)
                         .with(authUser(USER_1)))
@@ -167,7 +167,7 @@ class ChatMemberControllerApiTest {
     @Test
     void kickUser_notOwner_returnsForbidden() throws Exception {
         runAs(USER_1);
-        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2, USER_3)));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2, USER_3)));
 
         mockMvc.perform(delete("/api/v1/chats/{chatId}/members/{memberId}", chat.id(), USER_3)
                         .with(authUser(USER_2)))
