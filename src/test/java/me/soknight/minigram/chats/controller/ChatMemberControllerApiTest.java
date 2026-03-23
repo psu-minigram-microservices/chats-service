@@ -1,10 +1,10 @@
 package me.soknight.minigram.chats.controller;
 
 import me.soknight.minigram.chats.model.attribute.ChatType;
-import me.soknight.minigram.chats.model.attribute.RelationStatus;
 import me.soknight.minigram.chats.model.request.CreateChatRequest;
 import me.soknight.minigram.chats.service.ChatService;
-import me.soknight.minigram.chats.service.client.TestProfileRelationsClient;
+import me.soknight.minigram.chats.service.client.TestProfileClient;
+import me.soknight.minigram.chats.service.client.model.attribute.RelationStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,11 +33,11 @@ class ChatMemberControllerApiTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired ChatService chatService;
-    @Autowired TestProfileRelationsClient profileRelationsClient;
+    @Autowired TestProfileClient profileClient;
 
     @BeforeEach
     void resetRelations() {
-        profileRelationsClient.reset();
+        profileClient.reset();
     }
 
     @Test
@@ -48,6 +48,8 @@ class ChatMemberControllerApiTest {
                         .with(authUser(USER_1)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.user_id").value(USER_3.toString()))
+                .andExpect(jsonPath("$.name").value("User 00000000"))
+                .andExpect(jsonPath("$.photoUrl").value("https://example.com/" + USER_3 + ".png"))
                 .andExpect(jsonPath("$.role").value("member"));
     }
 
@@ -64,7 +66,7 @@ class ChatMemberControllerApiTest {
     @Test
     void inviteUser_whenRelationNotAccepted_returnsForbidden() throws Exception {
         var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
-        profileRelationsClient.setStatus(USER_3, RelationStatus.NONE);
+        profileClient.setStatus(USER_3, RelationStatus.NONE);
 
         mockMvc.perform(post("/api/v1/chats/{chatId}/members/{userId}", chat.id(), USER_3)
                         .with(authUser(USER_1)))
@@ -91,6 +93,8 @@ class ChatMemberControllerApiTest {
                         .with(authUser(USER_1)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.user_id").value(USER_1.toString()))
+                .andExpect(jsonPath("$.name").value("User 00000000"))
+                .andExpect(jsonPath("$.photoUrl").value("https://example.com/" + USER_1 + ".png"))
                 .andExpect(jsonPath("$.role").value("owner"));
     }
 
@@ -102,6 +106,8 @@ class ChatMemberControllerApiTest {
                         .with(authUser(USER_1)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.user_id").value(USER_2.toString()))
+                .andExpect(jsonPath("$.name").value("User 00000000"))
+                .andExpect(jsonPath("$.photoUrl").value("https://example.com/" + USER_2 + ".png"))
                 .andExpect(jsonPath("$.role").value("member"));
     }
 

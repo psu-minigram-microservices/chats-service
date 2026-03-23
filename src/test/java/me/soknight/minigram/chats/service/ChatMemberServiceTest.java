@@ -4,10 +4,10 @@ import jakarta.persistence.EntityManager;
 import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.attribute.ChatMemberRole;
 import me.soknight.minigram.chats.model.attribute.ChatType;
-import me.soknight.minigram.chats.model.attribute.RelationStatus;
 import me.soknight.minigram.chats.model.dto.ChatDto;
 import me.soknight.minigram.chats.model.request.CreateChatRequest;
-import me.soknight.minigram.chats.service.client.TestProfileRelationsClient;
+import me.soknight.minigram.chats.service.client.TestProfileClient;
+import me.soknight.minigram.chats.service.client.model.attribute.RelationStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,12 +33,12 @@ class ChatMemberServiceTest {
 
     @Autowired ChatService chatService;
     @Autowired ChatMemberService chatMemberService;
-    @Autowired TestProfileRelationsClient profileRelationsClient;
+    @Autowired TestProfileClient profileClient;
     @Autowired EntityManager em;
 
     @BeforeEach
     void resetRelations() {
-        profileRelationsClient.reset();
+        profileClient.reset();
     }
 
     private void flushAndClear() {
@@ -76,6 +76,8 @@ class ChatMemberServiceTest {
         var member = chatMemberService.getMember(USER_1, chat.id(), USER_2);
 
         assertThat(member.userId()).isEqualTo(USER_2);
+        assertThat(member.name()).isEqualTo("User 00000000");
+        assertThat(member.photoUrl()).isEqualTo("https://example.com/" + USER_2 + ".png");
         assertThat(member.role()).isEqualTo(ChatMemberRole.MEMBER);
     }
 
@@ -96,6 +98,8 @@ class ChatMemberServiceTest {
         var member = chatMemberService.inviteUser(USER_1, chat.id(), USER_3);
 
         assertThat(member.userId()).isEqualTo(USER_3);
+        assertThat(member.name()).isEqualTo("User 00000000");
+        assertThat(member.photoUrl()).isEqualTo("https://example.com/" + USER_3 + ".png");
         assertThat(member.role()).isEqualTo(ChatMemberRole.MEMBER);
         flushAndClear();
 
@@ -131,7 +135,7 @@ class ChatMemberServiceTest {
     @Test
     void inviteUser_whenRelationNotAccepted_throws() throws ApiException {
         var chat = createGroup(USER_1, USER_2);
-        profileRelationsClient.setStatus(USER_3, RelationStatus.BLOCKED);
+        profileClient.setStatus(USER_3, RelationStatus.BLOCKED);
 
         assertThatThrownBy(() -> chatMemberService.inviteUser(USER_1, chat.id(), USER_3))
                 .isInstanceOf(ApiException.class);

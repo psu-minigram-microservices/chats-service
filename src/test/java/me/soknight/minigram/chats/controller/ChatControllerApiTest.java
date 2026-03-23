@@ -1,10 +1,10 @@
 package me.soknight.minigram.chats.controller;
 
 import me.soknight.minigram.chats.model.attribute.ChatType;
-import me.soknight.minigram.chats.model.attribute.RelationStatus;
 import me.soknight.minigram.chats.model.request.CreateChatRequest;
 import me.soknight.minigram.chats.service.ChatService;
-import me.soknight.minigram.chats.service.client.TestProfileRelationsClient;
+import me.soknight.minigram.chats.service.client.TestProfileClient;
+import me.soknight.minigram.chats.service.client.model.attribute.RelationStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,11 +36,11 @@ class ChatControllerApiTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired ChatService chatService;
-    @Autowired TestProfileRelationsClient profileRelationsClient;
+    @Autowired TestProfileClient profileClient;
 
     @BeforeEach
     void resetRelations() {
-        profileRelationsClient.reset();
+        profileClient.reset();
     }
 
     @Test
@@ -59,6 +59,8 @@ class ChatControllerApiTest {
                 .andExpect(jsonPath("$.type").value("group"))
                 .andExpect(jsonPath("$.title").value("Team Chat"))
                 .andExpect(jsonPath("$.owner_id").value(USER_1.toString()))
+                .andExpect(jsonPath("$.members[0].name").isNotEmpty())
+                .andExpect(jsonPath("$.members[0].photoUrl").isNotEmpty())
                 .andExpect(jsonPath("$.members[*].user_id", hasItem(USER_1.toString())))
                 .andExpect(jsonPath("$.members[*].user_id", hasItem(USER_2.toString())))
                 .andExpect(jsonPath("$.members[*].user_id", hasItem(USER_3.toString())));
@@ -80,7 +82,7 @@ class ChatControllerApiTest {
 
     @Test
     void createDirectChat_whenRelationNotAccepted_returnsForbidden() throws Exception {
-        profileRelationsClient.setStatus(USER_2, RelationStatus.NONE);
+        profileClient.setStatus(USER_2, RelationStatus.NONE);
 
         mockMvc.perform(post("/api/v1/chats")
                         .with(authUser(USER_1))
@@ -97,7 +99,7 @@ class ChatControllerApiTest {
 
     @Test
     void createGroupChat_whenAnyMemberRelationNotAccepted_returnsForbidden() throws Exception {
-        profileRelationsClient.setStatus(USER_3, RelationStatus.BLOCKED);
+        profileClient.setStatus(USER_3, RelationStatus.BLOCKED);
 
         mockMvc.perform(post("/api/v1/chats")
                         .with(authUser(USER_1))

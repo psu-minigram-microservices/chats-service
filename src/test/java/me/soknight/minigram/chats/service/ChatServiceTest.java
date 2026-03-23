@@ -4,10 +4,10 @@ import jakarta.persistence.EntityManager;
 import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.attribute.ChatMemberRole;
 import me.soknight.minigram.chats.model.attribute.ChatType;
-import me.soknight.minigram.chats.model.attribute.RelationStatus;
 import me.soknight.minigram.chats.model.dto.ChatDto;
 import me.soknight.minigram.chats.model.request.CreateChatRequest;
-import me.soknight.minigram.chats.service.client.TestProfileRelationsClient;
+import me.soknight.minigram.chats.service.client.TestProfileClient;
+import me.soknight.minigram.chats.service.client.model.attribute.RelationStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,12 +32,12 @@ class ChatServiceTest {
     private static final UUID UNKNOWN_USER = UUID.fromString("00000000-0000-0000-0000-000000000999");
 
     @Autowired ChatService chatService;
-    @Autowired TestProfileRelationsClient profileRelationsClient;
+    @Autowired TestProfileClient profileClient;
     @Autowired EntityManager em;
 
     @BeforeEach
     void resetRelations() {
-        profileRelationsClient.reset();
+        profileClient.reset();
     }
 
     private void flushAndClear() {
@@ -56,6 +56,8 @@ class ChatServiceTest {
         assertThat(chat.ownerId()).isEqualTo(USER_1);
         assertThat(chat.members()).hasSize(1);
         assertThat(chat.members().getFirst().userId()).isEqualTo(USER_1);
+        assertThat(chat.members().getFirst().name()).isEqualTo("User 00000000");
+        assertThat(chat.members().getFirst().photoUrl()).isEqualTo("https://example.com/" + USER_1 + ".png");
         assertThat(chat.members().getFirst().role()).isEqualTo(ChatMemberRole.OWNER);
     }
 
@@ -72,6 +74,10 @@ class ChatServiceTest {
         assertThat(chat.type()).isEqualTo(ChatType.DIRECT);
         assertThat(chat.title()).isNull();
         assertThat(chat.members()).hasSize(2);
+        assertThat(chat.members()).allSatisfy(member -> {
+            assertThat(member.name()).isEqualTo("User 00000000");
+            assertThat(member.photoUrl()).startsWith("https://example.com/");
+        });
     }
 
     @Test
@@ -101,7 +107,7 @@ class ChatServiceTest {
 
     @Test
     void createDirectChat_whenRelationNotAccepted_throws() {
-        profileRelationsClient.setStatus(USER_2, RelationStatus.BLOCKED);
+        profileClient.setStatus(USER_2, RelationStatus.BLOCKED);
 
         assertThatThrownBy(() -> chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2))))
                 .isInstanceOf(ApiException.class);
@@ -109,7 +115,7 @@ class ChatServiceTest {
 
     @Test
     void createGroupChat_whenMemberRelationNotAccepted_throws() {
-        profileRelationsClient.setStatus(USER_3, RelationStatus.NONE);
+        profileClient.setStatus(USER_3, RelationStatus.NONE);
 
         assertThatThrownBy(() -> chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test Group", List.of(USER_2, USER_3))))
                 .isInstanceOf(ApiException.class);
