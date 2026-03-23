@@ -1,4 +1,4 @@
-package me.soknight.minigram.chats.model.dto.client;
+package me.soknight.minigram.chats.service.client.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 
