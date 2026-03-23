@@ -12,11 +12,6 @@
         ],
         "requestBody": {
           "content": {
-            "application/json-patch+json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginRequestDto"
-              }
-            },
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/LoginRequestDto"
@@ -65,11 +60,6 @@
         ],
         "requestBody": {
           "content": {
-            "application/json-patch+json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterRequestDto"
-              }
-            },
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RegisterRequestDto"
@@ -130,11 +120,6 @@
         ],
         "requestBody": {
           "content": {
-            "application/json-patch+json": {
-              "schema": {
-                "$ref": "#/components/schemas/RefreshRequest"
-              }
-            },
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RefreshRequest"

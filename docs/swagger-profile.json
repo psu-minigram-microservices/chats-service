@@ -57,11 +57,6 @@
         ],
         "requestBody": {
           "content": {
-            "application/json-patch+json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProfileRequestDto"
-              }
-            },
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ProfileRequestDto"
@@ -91,11 +86,6 @@
         ],
         "requestBody": {
           "content": {
-            "application/json-patch+json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProfileRequestDto"
-              }
-            },
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ProfileRequestDto"
@@ -109,52 +99,6 @@
             "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/ProfileRequestDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Profile"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json-patch+json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/Operation"
-                }
-              }
-            },
-            "application/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/Operation"
-                }
-              }
-            },
-            "text/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/Operation"
-                }
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/Operation"
-                }
               }
             }
           }
@@ -195,14 +139,14 @@
         }
       }
     },
-    "/api/v1/profiles/{userId}": {
+    "/api/v1/profiles/{id}": {
       "get": {
         "tags": [
           "Profile"
         ],
         "parameters": [
           {
-            "name": "userId",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -244,8 +188,9 @@
           {
             "name": "status",
             "in": "query",
+            "required": true,
             "schema": {
-              "$ref": "#/components/schemas/tRelationshipStatus"
+              "$ref": "#/components/schemas/tStatus"
             }
           },
           {
@@ -328,34 +273,6 @@
           }
         }
       },
-      "post": {
-        "tags": [
-          "Relation"
-        ],
-        "parameters": [
-          {
-            "name": "receiverId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/tRelationshipStatus"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      },
       "delete": {
         "tags": [
           "Relation"
@@ -377,46 +294,64 @@
           }
         }
       }
+    },
+    "/api/v1/profiles/relations/send/{receiverId}": {
+      "post": {
+        "tags": [
+          "Relation"
+        ],
+        "parameters": [
+          {
+            "name": "receiverId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/profiles/relations/reply/{senderId}": {
+      "post": {
+        "tags": [
+          "Relation"
+        ],
+        "parameters": [
+          {
+            "name": "senderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/tReplyStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
-      "Operation": {
-        "type": "object",
-        "properties": {
-          "operationType": {
-            "$ref": "#/components/schemas/OperationType"
-          },
-          "path": {
-            "type": "string",
-            "nullable": true
-          },
-          "op": {
-            "type": "string",
-            "nullable": true
-          },
-          "from": {
-            "type": "string",
-            "nullable": true
-          },
-          "value": {
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "OperationType": {
-        "enum": [
-          "Add",
-          "Remove",
-          "Replace",
-          "Move",
-          "Copy",
-          "Test",
-          "Invalid"
-        ],
-        "type": "string"
-      },
       "ProfileRequestDto": {
         "required": [
           "name"
@@ -438,7 +373,7 @@
       "ProfileResponseDto": {
         "type": "object",
         "properties": {
-          "userId": {
+          "id": {
             "type": "string",
             "format": "uuid"
           },
@@ -474,7 +409,7 @@
         "type": "object",
         "properties": {
           "status": {
-            "$ref": "#/components/schemas/tRelationshipStatus"
+            "$ref": "#/components/schemas/tStatus"
           },
           "profile": {
             "$ref": "#/components/schemas/ProfileResponseDto"
@@ -482,11 +417,18 @@
         },
         "additionalProperties": false
       },
-      "tRelationshipStatus": {
+      "tReplyStatus": {
         "enum": [
-          "Pending",
           "Accepted",
           "Rejected",
+          "Blocked"
+        ],
+        "type": "string"
+      },
+      "tStatus": {
+        "enum": [
+          "None",
+          "Friend",
           "Blocked"
         ],
         "type": "string"
