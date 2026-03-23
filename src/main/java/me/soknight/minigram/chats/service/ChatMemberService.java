@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.attribute.ChatMemberRole;
 import me.soknight.minigram.chats.model.attribute.RelationStatus;
+import me.soknight.minigram.chats.model.attribute.RelationType;
 import me.soknight.minigram.chats.model.dto.ChatMemberDto;
 import me.soknight.minigram.chats.model.entity.ChatEntity;
 import me.soknight.minigram.chats.model.entity.ChatMemberEntity;
@@ -57,7 +58,7 @@ public class ChatMemberService {
         if (chatMemberRepository.existsById(chatId, invitedUserId))
             throw new ApiException(HttpStatus.CONFLICT, "member_already_exists", "User {0} is already in chat", invitedUserId);
 
-        validateAcceptedRelation(invitedUserId);
+        validateFriendRelation(invitedUserId);
 
         var member = new ChatMemberEntity(chat, invitedUserId, ChatMemberRole.MEMBER);
         chatMemberRepository.save(member);
@@ -111,11 +112,11 @@ public class ChatMemberService {
         return dto;
     }
 
-    private void validateAcceptedRelation(UUID invitedUserId) throws ApiException {
-        var relation = profileRelationsClient.getRelation(invitedUserId);
+    private void validateFriendRelation(UUID invitedUserId) throws ApiException {
+        var relation = profileRelationsClient.getRelation(invitedUserId, RelationType.OUTGOING);
         var status = relation.status();
 
-        if (status == RelationStatus.ACCEPTED) return;
+        if (status == RelationStatus.FRIEND) return;
 
         throw new ApiException(
                 HttpStatus.FORBIDDEN,

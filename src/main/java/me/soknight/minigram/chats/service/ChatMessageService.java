@@ -3,6 +3,7 @@ package me.soknight.minigram.chats.service;
 import lombok.AllArgsConstructor;
 import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.attribute.RelationStatus;
+import me.soknight.minigram.chats.model.attribute.RelationType;
 import me.soknight.minigram.chats.model.dto.ChatMessageDto;
 import me.soknight.minigram.chats.model.entity.ChatEntity;
 import me.soknight.minigram.chats.model.entity.ChatMemberEntity;
@@ -123,10 +124,10 @@ public class ChatMessageService {
                         "Direct chat must contain exactly one additional member"
                 ));
 
-        var relation = profileRelationsClient.getRelation(receiverId);
+        var relation = profileRelationsClient.getRelation(receiverId, RelationType.OUTGOING);
         var status = relation.status();
 
-        if (status == RelationStatus.ACCEPTED) return;
+        if (status == RelationStatus.FRIEND) return;
 
         throw new ApiException(
                 HttpStatus.FORBIDDEN,

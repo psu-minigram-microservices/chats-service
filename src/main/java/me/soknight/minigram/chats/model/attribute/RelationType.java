@@ -5,15 +5,15 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.jspecify.annotations.NonNull;
+
 import java.util.Arrays;
 
 @Getter
 @AllArgsConstructor
-public enum RelationStatus {
+public enum RelationType {
 
-    NONE        ("None"),
-    FRIEND      ("Friend"),
-    BLOCKED     ("Blocked");
+    INCOMING("Incoming"),
+    OUTGOING("Outgoing");
 
     private final @NonNull String key;
 
@@ -23,11 +23,11 @@ public enum RelationStatus {
     }
 
     @JsonCreator
-    public static @NonNull RelationStatus ofKey(@NonNull String key) {
+    public static @NonNull RelationType ofKey(@NonNull String key) {
         return Arrays.stream(values())
-                .filter(status -> status.getKey().equalsIgnoreCase(key))
+                .filter(type -> type.getKey().equalsIgnoreCase(key))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Unknown relationship status: " + key));
+                .orElseThrow(() -> new IllegalArgumentException("Unknown relation type: " + key));
     }
 
 }

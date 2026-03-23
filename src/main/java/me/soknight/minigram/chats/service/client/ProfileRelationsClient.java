@@ -3,6 +3,7 @@ package me.soknight.minigram.chats.service.client;
 import lombok.AllArgsConstructor;
 import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.attribute.RelationStatus;
+import me.soknight.minigram.chats.model.attribute.RelationType;
 import me.soknight.minigram.chats.model.dto.client.ProfilePageDto;
 import me.soknight.minigram.chats.model.dto.client.ProfileRelationDto;
 import org.jspecify.annotations.NonNull;
@@ -21,7 +22,8 @@ public class ProfileRelationsClient {
     private final @NonNull RestClient profileServiceRestClient;
 
     public @NonNull ProfilePageDto getRelations(
-            @Nullable RelationStatus status,
+            @NonNull RelationStatus status,
+            @NonNull RelationType type,
             @Nullable Integer page,
             @Nullable Integer perPage
     ) throws ApiException {
@@ -30,8 +32,8 @@ public class ProfileRelationsClient {
                     .uri(uriBuilder -> {
                         var builder = uriBuilder.path("/api/v1/profiles/relations");
 
-                        if (status != null)
-                            builder.queryParam("status", status.getKey());
+                        builder.queryParam("status", status.getKey());
+                        builder.queryParam("type", type.getKey());
                         if (page != null)
                             builder.queryParam("Page", page);
                         if (perPage != null)
@@ -59,10 +61,13 @@ public class ProfileRelationsClient {
         }
     }
 
-    public @NonNull ProfileRelationDto getRelation(UUID receiverId) throws ApiException {
+    public @NonNull ProfileRelationDto getRelation(UUID receiverId, @NonNull RelationType type) throws ApiException {
         try {
             var relation = profileServiceRestClient.get()
-                    .uri("/api/v1/profiles/relations/{receiverId}", receiverId)
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/api/v1/profiles/relations/{receiverId}")
+                            .queryParam("type", type.getKey())
+                            .build(receiverId))
                     .retrieve()
                     .body(ProfileRelationDto.class);
 
@@ -80,41 +85,6 @@ public class ProfileRelationsClient {
                     HttpStatus.BAD_GATEWAY,
                     "profile_service_unavailable",
                     "Failed to fetch relation with user {0} from profile service",
-                    receiverId
-            ).withPayload(ex.getMessage());
-        }
-    }
-
-    public void setRelation(UUID receiverId, @NonNull RelationStatus status) throws ApiException {
-        try {
-            profileServiceRestClient.post()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/api/v1/profiles/relations/{receiverId}")
-                            .queryParam("status", status.getKey())
-                            .build(receiverId))
-                    .retrieve()
-                    .toBodilessEntity();
-        } catch (RestClientException ex) {
-            throw new ApiException(
-                    HttpStatus.BAD_GATEWAY,
-                    "profile_service_unavailable",
-                    "Failed to set relation with user {0} in profile service",
-                    receiverId
-            ).withPayload(ex.getMessage());
-        }
-    }
-
-    public void deleteRelation(UUID receiverId) throws ApiException {
-        try {
-            profileServiceRestClient.delete()
-                    .uri("/api/v1/profiles/relations/{receiverId}", receiverId)
-                    .retrieve()
-                    .toBodilessEntity();
-        } catch (RestClientException ex) {
-            throw new ApiException(
-                    HttpStatus.BAD_GATEWAY,
-                    "profile_service_unavailable",
-                    "Failed to delete relation with user {0} in profile service",
                     receiverId
             ).withPayload(ex.getMessage());
         }
