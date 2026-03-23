@@ -2,9 +2,8 @@ package me.soknight.minigram.chats.service;
 
 import lombok.AllArgsConstructor;
 import me.soknight.minigram.chats.exception.ApiException;
-import me.soknight.minigram.chats.model.attribute.RelationStatus;
-import me.soknight.minigram.chats.model.attribute.RelationType;
 import me.soknight.minigram.chats.model.dto.ChatMessageDto;
+import me.soknight.minigram.chats.model.dto.mapper.ChatDtoMapper;
 import me.soknight.minigram.chats.model.entity.ChatEntity;
 import me.soknight.minigram.chats.model.entity.ChatMemberEntity;
 import me.soknight.minigram.chats.model.entity.ChatMessageEntity;
@@ -15,9 +14,12 @@ import me.soknight.minigram.chats.model.websocket.ChatEvent;
 import me.soknight.minigram.chats.repository.ChatMemberRepository;
 import me.soknight.minigram.chats.repository.ChatMessageRepository;
 import me.soknight.minigram.chats.repository.ChatRepository;
-import me.soknight.minigram.chats.service.client.ProfileRelationsClient;
+import me.soknight.minigram.chats.service.client.ProfileClient;
+import me.soknight.minigram.chats.service.client.model.attribute.RelationStatus;
+import me.soknight.minigram.chats.service.client.model.attribute.RelationType;
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -33,8 +35,9 @@ public class ChatMessageService {
     private final @NonNull ChatRepository chatRepository;
     private final @NonNull ChatMemberRepository chatMemberRepository;
     private final @NonNull ChatMessageRepository chatMessageRepository;
-    private final @NonNull ProfileRelationsClient profileRelationsClient;
+    private final @NonNull ProfileClient profileClient;
     private final @NonNull ChatEventPublisher eventPublisher;
+    private final @NonNull ChatDtoMapper chatDtoMapper;
 
     @Transactional(readOnly = true)
     public @NonNull Page<ChatMessageDto> getMessages(
@@ -43,7 +46,17 @@ public class ChatMessageService {
             @NonNull Pageable pageable
     ) throws ApiException {
         getMember(chatId, userId);
-        return chatMessageRepository.findByChatId(chatId, pageable).map(ChatMessageDto::fromEntity);
+        var page = chatMessageRepository.findByChatId(chatId, pageable);
+
+        try {
+            var messages = page.getContent().stream()
+                    .map(this::toUncheckedChatMessageDto)
+                    .toList();
+
+            return new PageImpl<>(messages, pageable, page.getTotalElements());
+        } catch (ChatDtoMapper.ChatDtoMappingException ex) {
+            throw ex.apiException();
+        }
     }
 
     @Transactional(readOnly = true)
@@ -57,7 +70,7 @@ public class ChatMessageService {
                 messageId
         ));
 
-        return ChatMessageDto.fromEntity(message);
+        return chatDtoMapper.toChatMessageDto(message);
     }
 
     @Transactional
@@ -76,7 +89,7 @@ public class ChatMessageService {
         var message = chatMessageRepository.save(new ChatMessageEntity(id, sender, request.content().trim()));
         chatRepository.updateLastMessageId(chatId, message.getMessageId(), Instant.now());
 
-        var dto = ChatMessageDto.fromEntity(message);
+        var dto = chatDtoMapper.toChatMessageDto(message);
         eventPublisher.publish(chatId, ChatEvent.messageSent(chatId, dto));
         return dto;
     }
@@ -92,7 +105,7 @@ public class ChatMessageService {
         message.updateContent(request.content().trim());
 
         var updatedMessage = chatMessageRepository.save(message);
-        var dto = ChatMessageDto.fromEntity(updatedMessage);
+        var dto = chatDtoMapper.toChatMessageDto(updatedMessage);
         eventPublisher.publish(chatId, ChatEvent.messageEdited(chatId, dto));
         return dto;
     }
@@ -101,7 +114,7 @@ public class ChatMessageService {
     public @NonNull ChatMessageDto deleteMessage(UUID actorUserId, long chatId, long messageId) throws ApiException {
         var message = getEditableMessage(chatId, messageId, actorUserId);
 
-        var dto = ChatMessageDto.fromEntity(message);
+        var dto = chatDtoMapper.toChatMessageDto(message);
         chatMessageRepository.delete(message);
 
         var newLastMessageId = chatMessageRepository.findLastMessageIdByChatIdExcluding(chatId, messageId).orElse(null);
@@ -124,7 +137,7 @@ public class ChatMessageService {
                         "Direct chat must contain exactly one additional member"
                 ));
 
-        var relation = profileRelationsClient.getRelation(receiverId, RelationType.OUTGOING);
+        var relation = profileClient.getRelation(receiverId, RelationType.OUTGOING);
         var status = relation.status();
 
         if (status == RelationStatus.FRIEND) return;
@@ -165,6 +178,14 @@ public class ChatMessageService {
             );
 
         return message;
+    }
+
+    private @NonNull ChatMessageDto toUncheckedChatMessageDto(@NonNull ChatMessageEntity message) {
+        try {
+            return chatDtoMapper.toChatMessageDto(message);
+        } catch (ApiException ex) {
+            throw new ChatDtoMapper.ChatDtoMappingException(ex);
+        }
     }
 
 }

@@ -3,17 +3,19 @@ package me.soknight.minigram.chats.service;
 import lombok.AllArgsConstructor;
 import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.attribute.ChatMemberRole;
-import me.soknight.minigram.chats.model.attribute.RelationStatus;
-import me.soknight.minigram.chats.model.attribute.RelationType;
 import me.soknight.minigram.chats.model.dto.ChatMemberDto;
+import me.soknight.minigram.chats.model.dto.mapper.ChatDtoMapper;
 import me.soknight.minigram.chats.model.entity.ChatEntity;
 import me.soknight.minigram.chats.model.entity.ChatMemberEntity;
 import me.soknight.minigram.chats.model.websocket.ChatEvent;
 import me.soknight.minigram.chats.repository.ChatMemberRepository;
 import me.soknight.minigram.chats.repository.ChatRepository;
-import me.soknight.minigram.chats.service.client.ProfileRelationsClient;
+import me.soknight.minigram.chats.service.client.ProfileClient;
+import me.soknight.minigram.chats.service.client.model.attribute.RelationStatus;
+import me.soknight.minigram.chats.service.client.model.attribute.RelationType;
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -29,20 +31,30 @@ public class ChatMemberService {
     private final @NonNull ChatRepository chatRepository;
     private final @NonNull ChatMemberRepository chatMemberRepository;
     private final @NonNull ChatService chatService;
-    private final @NonNull ProfileRelationsClient profileRelationsClient;
+    private final @NonNull ProfileClient profileClient;
     private final @NonNull ChatEventPublisher eventPublisher;
+    private final @NonNull ChatDtoMapper chatDtoMapper;
 
     @Transactional(readOnly = true)
     public @NonNull Page<ChatMemberDto> getMembers(UUID userId, long chatId, @NonNull Pageable pageable) throws ApiException {
         getExistingMember(chatId, userId);
-        return chatMemberRepository.findByChatId(chatId, pageable)
-                .map(ChatMemberDto::fromEntity);
+        var page = chatMemberRepository.findByChatId(chatId, pageable);
+
+        try {
+            var members = page.getContent().stream()
+                    .map(this::toUncheckedChatMemberDto)
+                    .toList();
+
+            return new PageImpl<>(members, pageable, page.getTotalElements());
+        } catch (ChatDtoMapper.ChatDtoMappingException ex) {
+            throw ex.apiException();
+        }
     }
 
     @Transactional(readOnly = true)
     public @NonNull ChatMemberDto getMember(UUID actorUserId, long chatId, UUID memberId) throws ApiException {
         getExistingMember(chatId, actorUserId);
-        return ChatMemberDto.fromEntity(getExistingMember(chatId, memberId));
+        return chatDtoMapper.toChatMemberDto(getExistingMember(chatId, memberId));
     }
 
     @Transactional
@@ -64,7 +76,7 @@ public class ChatMemberService {
         chatMemberRepository.save(member);
         chatRepository.touch(chatId, Instant.now());
 
-        var dto = ChatMemberDto.fromEntity(member);
+        var dto = chatDtoMapper.toChatMemberDto(member);
         eventPublisher.publish(chatId, ChatEvent.memberJoined(chatId, dto));
         return dto;
     }
@@ -104,7 +116,7 @@ public class ChatMemberService {
             @NonNull ChatEntity chat
     ) throws ApiException {
         var member = getExistingMember(chatId, userId);
-        var dto = ChatMemberDto.fromEntity(member);
+        var dto = chatDtoMapper.toChatMemberDto(member);
         chat.getMembers().remove(member);
         chatRepository.touch(chatId, Instant.now());
 
@@ -113,7 +125,7 @@ public class ChatMemberService {
     }
 
     private void validateFriendRelation(UUID invitedUserId) throws ApiException {
-        var relation = profileRelationsClient.getRelation(invitedUserId, RelationType.OUTGOING);
+        var relation = profileClient.getRelation(invitedUserId, RelationType.OUTGOING);
         var status = relation.status();
 
         if (status == RelationStatus.FRIEND) return;
@@ -136,6 +148,14 @@ public class ChatMemberService {
                         userId,
                         chatId
                 ));
+    }
+
+    private @NonNull ChatMemberDto toUncheckedChatMemberDto(@NonNull ChatMemberEntity member) {
+        try {
+            return chatDtoMapper.toChatMemberDto(member);
+        } catch (ApiException ex) {
+            throw new ChatDtoMapper.ChatDtoMappingException(ex);
+        }
     }
 
 }
