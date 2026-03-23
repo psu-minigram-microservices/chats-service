@@ -75,7 +75,7 @@ class ChatMemberServiceTest {
 
         var member = chatMemberService.getMember(USER_1, chat.id(), USER_2);
 
-        assertThat(member.userId()).isEqualTo(USER_2);
+        assertThat(member.profileId()).isEqualTo(USER_2);
         assertThat(member.name()).isEqualTo("User 00000000");
         assertThat(member.photoUrl()).isEqualTo("https://example.com/" + USER_2 + ".png");
         assertThat(member.role()).isEqualTo(ChatMemberRole.MEMBER);
@@ -97,7 +97,7 @@ class ChatMemberServiceTest {
 
         var member = chatMemberService.inviteUser(USER_1, chat.id(), USER_3);
 
-        assertThat(member.userId()).isEqualTo(USER_3);
+        assertThat(member.profileId()).isEqualTo(USER_3);
         assertThat(member.name()).isEqualTo("User 00000000");
         assertThat(member.photoUrl()).isEqualTo("https://example.com/" + USER_3 + ".png");
         assertThat(member.role()).isEqualTo(ChatMemberRole.MEMBER);

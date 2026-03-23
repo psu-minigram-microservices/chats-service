@@ -7,7 +7,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record ChatMemberDto(
-        @JsonProperty("user_id") UUID userId,
+        @JsonProperty("profile_id") UUID profileId,
         @JsonProperty("name") String name,
         @JsonProperty("photoUrl") String photoUrl,
         @JsonProperty("role") ChatMemberRole role,

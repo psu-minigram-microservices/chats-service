@@ -32,19 +32,19 @@ public class ChatMemberController extends ApiControllerBase {
     @GetMapping("/{chat_id}/members")
     public @NonNull Page<ChatMemberDto> getMembers(
             @PathVariable("chat_id") @Positive long chatId,
-            @PageableDefault(size = 50, sort = {"joinedAt", "id.userId"}, direction = Sort.Direction.DESC) Pageable pageable,
+            @PageableDefault(size = 50, sort = {"joinedAt", "id.profileId"}, direction = Sort.Direction.DESC) Pageable pageable,
             @Nullable Authentication authentication
     ) throws ApiException {
         return chatMemberService.getMembers(extractUserId(authentication), chatId, pageable);
     }
 
-    @PostMapping("/{chat_id}/members/{user_id}")
+    @PostMapping("/{chat_id}/members/{profile_id}")
     public @NonNull ChatMemberDto inviteUser(
             @PathVariable("chat_id") @Positive long chatId,
-            @PathVariable("user_id") UUID userId,
+            @PathVariable("profile_id") UUID profileId,
             @Nullable Authentication authentication
     ) throws ApiException {
-        return chatMemberService.inviteUser(extractUserId(authentication), chatId, userId);
+        return chatMemberService.inviteUser(extractUserId(authentication), chatId, profileId);
     }
 
     // -------------- /chats/{id}/members/{id} -------------------------------------------------------------------------
