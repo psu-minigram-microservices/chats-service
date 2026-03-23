@@ -194,6 +194,14 @@
             }
           },
           {
+            "name": "type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/tRelationType"
+            }
+          },
+          {
             "name": "Page",
             "in": "query",
             "schema": {
@@ -247,6 +255,14 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/tRelationType"
             }
           }
         ],
@@ -416,6 +432,13 @@
           }
         },
         "additionalProperties": false
+      },
+      "tRelationType": {
+        "enum": [
+          "Incoming",
+          "Outgoing"
+        ],
+        "type": "string"
       },
       "tReplyStatus": {
         "enum": [
