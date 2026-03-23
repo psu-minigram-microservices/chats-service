@@ -8,12 +8,15 @@ import me.soknight.minigram.chats.model.dto.ChatDto;
 import me.soknight.minigram.chats.model.request.CreateChatRequest;
 import me.soknight.minigram.chats.service.client.TestProfileClient;
 import me.soknight.minigram.chats.service.client.model.attribute.RelationStatus;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -41,6 +44,17 @@ class ChatMemberServiceTest {
         profileClient.reset();
     }
 
+    @AfterEach
+    void clearAuth() {
+        SecurityContextHolder.clearContext();
+    }
+
+    private void runAs(UUID userId) {
+        SecurityContextHolder.getContext().setAuthentication(
+                new TestingAuthenticationToken(userId.toString(), null)
+        );
+    }
+
     private void flushAndClear() {
         em.flush();
         em.clear();
@@ -62,6 +76,7 @@ class ChatMemberServiceTest {
     void getMembers_notMember_throws() throws ApiException {
         var chat = createGroup(USER_1, USER_2);
 
+        runAs(UNKNOWN_USER);
         var pageable = PageRequest.of(0, 50);
         assertThatThrownBy(() -> chatMemberService.getMembers(UNKNOWN_USER, chat.id(), pageable))
                 .isInstanceOf(ApiException.class);
@@ -109,6 +124,7 @@ class ChatMemberServiceTest {
 
     @Test
     void inviteUser_notGroup_throws() throws ApiException {
+        runAs(USER_1);
         var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
         flushAndClear();
 
@@ -120,6 +136,7 @@ class ChatMemberServiceTest {
     void inviteUser_notOwner_throws() throws ApiException {
         var chat = createGroup(USER_1, USER_2);
 
+        runAs(USER_2);
         assertThatThrownBy(() -> chatMemberService.inviteUser(USER_2, chat.id(), USER_3))
                 .isInstanceOf(ApiException.class);
     }
@@ -147,15 +164,18 @@ class ChatMemberServiceTest {
     void leaveChat() throws ApiException {
         var chat = createGroup(USER_1, USER_2);
 
+        runAs(USER_2);
         chatMemberService.leaveChat(USER_2, chat.id());
         flushAndClear();
 
+        runAs(USER_1);
         var updated = chatService.getChat(USER_1, chat.id());
         assertThat(updated.members()).hasSize(1);
     }
 
     @Test
     void leaveChat_savedChat_throws() throws ApiException {
+        runAs(USER_1);
         var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.SAVED, null, null));
         flushAndClear();
 
@@ -186,6 +206,7 @@ class ChatMemberServiceTest {
 
     @Test
     void kickUser_notGroup_throws() throws ApiException {
+        runAs(USER_1);
         var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
         flushAndClear();
 
@@ -197,6 +218,7 @@ class ChatMemberServiceTest {
     void kickUser_notOwner_throws() throws ApiException {
         var chat = createGroup(USER_1, USER_2, USER_3);
 
+        runAs(USER_2);
         assertThatThrownBy(() -> chatMemberService.kickUser(USER_2, chat.id(), USER_3))
                 .isInstanceOf(ApiException.class);
     }
@@ -212,6 +234,7 @@ class ChatMemberServiceTest {
     // --- helpers ---
 
     private ChatDto createGroup(UUID ownerId, UUID... memberIds) throws ApiException {
+        runAs(ownerId);
         var chat = chatService.createChat(ownerId, new CreateChatRequest(ChatType.GROUP, "Test Group", List.of(memberIds)));
         flushAndClear();
         return chat;

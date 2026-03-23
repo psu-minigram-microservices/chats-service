@@ -76,7 +76,7 @@ public class ProfileClient {
                 throw new ApiException(
                         HttpStatus.BAD_GATEWAY,
                         "profile_service_invalid_response",
-                        "Profile service returned empty relation response for user {0}",
+                        "Profile service returned empty relation response for {0}",
                         receiverId
                 );
 
@@ -85,10 +85,38 @@ public class ProfileClient {
             throw new ApiException(
                     HttpStatus.BAD_GATEWAY,
                     "profile_service_unavailable",
-                    "Failed to fetch relation with user {0} from profile service",
+                    "Failed to fetch relation with {0} from profile service",
                     receiverId
             ).withPayload(ex.getMessage());
         }
+    }
+
+    public @NonNull ProfileDto getMyProfile() throws ApiException {
+        try {
+            var profile = profileServiceRestClient.get()
+                    .uri("/api/v1/profiles/me")
+                    .retrieve()
+                    .body(ProfileDto.class);
+
+            if (profile == null)
+                throw new ApiException(
+                        HttpStatus.BAD_GATEWAY,
+                        "profile_service_invalid_response",
+                        "Profile service returned empty profile response for current user"
+                );
+
+            return profile;
+        } catch (RestClientException ex) {
+            throw new ApiException(
+                    HttpStatus.BAD_GATEWAY,
+                    "profile_service_unavailable",
+                    "Failed to fetch current user profile from profile service"
+            ).withPayload(ex.getMessage());
+        }
+    }
+
+    public @NonNull UUID resolveMyProfileId() throws ApiException {
+        return getMyProfile().userId();
     }
 
     public @NonNull ProfileDto getProfile(UUID id) throws ApiException {
@@ -102,7 +130,7 @@ public class ProfileClient {
                 throw new ApiException(
                         HttpStatus.BAD_GATEWAY,
                         "profile_service_invalid_response",
-                        "Profile service returned empty profile response for user {0}",
+                        "Profile service returned empty profile response for {0}",
                         id
                 );
 
@@ -111,7 +139,7 @@ public class ProfileClient {
             throw new ApiException(
                     HttpStatus.BAD_GATEWAY,
                     "profile_service_unavailable",
-                    "Failed to fetch profile for user {0} from profile service",
+                    "Failed to fetch profile for {0} from profile service",
                     id
             ).withPayload(ex.getMessage());
         }

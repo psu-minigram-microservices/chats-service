@@ -39,8 +39,9 @@ public class ChatService {
     private final @NonNull ChatDtoMapper chatDtoMapper;
 
     @Transactional(readOnly = true)
-    public @NonNull Page<ChatDto> getChats(UUID userId, @NonNull Pageable pageable) throws ApiException {
-        var page = chatRepository.findAllByMemberUserId(userId, pageable);
+    public @NonNull Page<ChatDto> getChats(@NonNull Pageable pageable) throws ApiException {
+        var actorProfileId = profileClient.resolveMyProfileId();
+        var page = chatRepository.findAllByMemberUserId(actorProfileId, pageable);
 
         try {
             var chats = page.getContent().stream()
@@ -54,24 +55,26 @@ public class ChatService {
     }
 
     @Transactional(readOnly = true)
-    public @NonNull ChatDto getChat(UUID userId, long chatId) throws ApiException {
-        return chatDtoMapper.toChatDto(getAccessibleChat(chatId, userId));
+    public @NonNull ChatDto getChat(long chatId) throws ApiException {
+        var actorProfileId = profileClient.resolveMyProfileId();
+        return chatDtoMapper.toChatDto(getAccessibleChat(chatId, actorProfileId));
     }
 
     @Transactional
-    public @NonNull ChatDto createChat(UUID ownerId, @NonNull CreateChatRequest request) throws ApiException {
+    public @NonNull ChatDto createChat(@NonNull CreateChatRequest request) throws ApiException {
+        var ownerProfileId = profileClient.resolveMyProfileId();
         Set<UUID> memberIds = new LinkedHashSet<>();
         if (request.memberIds() != null)
             memberIds.addAll(request.memberIds());
 
-        memberIds.remove(ownerId);
+        memberIds.remove(ownerProfileId);
 
         validateChatCreation(request.type(), request.title(), memberIds);
 
         var title = normalizeTitle(request.title(), request.type());
-        var chat = new ChatEntity(request.type(), title, ownerId);
+        var chat = new ChatEntity(request.type(), title, ownerProfileId);
 
-        chat.getMembers().add(new ChatMemberEntity(chat, ownerId, ChatMemberRole.OWNER));
+        chat.getMembers().add(new ChatMemberEntity(chat, ownerProfileId, ChatMemberRole.OWNER));
 
         for (UUID memberId : memberIds)
             chat.getMembers().add(new ChatMemberEntity(chat, memberId, ChatMemberRole.MEMBER));
@@ -82,10 +85,11 @@ public class ChatService {
     }
 
     @Transactional
-    public @NonNull ChatDto editChat(UUID userId, long chatId, @NonNull EditChatRequest request) throws ApiException {
-        var chat = getAccessibleChat(chatId, userId);
+    public @NonNull ChatDto editChat(long chatId, @NonNull EditChatRequest request) throws ApiException {
+        var actorProfileId = profileClient.resolveMyProfileId();
+        var chat = getAccessibleChat(chatId, actorProfileId);
 
-        if (!chat.getOwnerId().equals(userId))
+        if (!chat.getOwnerId().equals(actorProfileId))
             throw new ApiException(HttpStatus.FORBIDDEN, "access_denied", "Only chat owner can edit the chat");
 
         if (!chat.isGroup())
@@ -102,10 +106,11 @@ public class ChatService {
     }
 
     @Transactional
-    public @NonNull ChatDto deleteChat(UUID userId, long chatId) throws ApiException {
-        var chat = getAccessibleChat(chatId, userId);
+    public @NonNull ChatDto deleteChat(long chatId) throws ApiException {
+        var actorProfileId = profileClient.resolveMyProfileId();
+        var chat = getAccessibleChat(chatId, actorProfileId);
 
-        if (!chat.getOwnerId().equals(userId))
+        if (!chat.getOwnerId().equals(actorProfileId))
             throw new ApiException(HttpStatus.FORBIDDEN, "access_denied", "Only chat owner can delete the chat");
 
         var dto = chatDtoMapper.toChatDto(chat);
@@ -118,8 +123,8 @@ public class ChatService {
         return dto;
     }
 
-    @NonNull ChatEntity getAccessibleChat(long chatId, UUID userId) throws ApiException {
-        return chatRepository.findAccessibleById(chatId, userId)
+    @NonNull ChatEntity getAccessibleChat(long chatId, UUID profileId) throws ApiException {
+        return chatRepository.findAccessibleById(chatId, profileId)
                 .orElseThrow(() -> new ApiException(
                         HttpStatus.NOT_FOUND,
                         "chat_not_found",

@@ -7,6 +7,7 @@ import me.soknight.minigram.chats.service.client.model.dto.ProfilePageDto;
 import me.soknight.minigram.chats.service.client.model.dto.ProfileRelationDto;
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Primary;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -46,6 +47,13 @@ public class TestProfileClient extends ProfileClient {
     public @NonNull ProfileRelationDto getRelation(UUID receiverId, @NonNull RelationType type) {
         var status = statuses.getOrDefault(receiverId, RelationStatus.FRIEND);
         return new ProfileRelationDto(status, getProfile(receiverId));
+    }
+
+    @Override
+    public @NonNull ProfileDto getMyProfile() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        var userId = UUID.fromString(auth.getName());
+        return getProfile(userId);
     }
 
     @Override
