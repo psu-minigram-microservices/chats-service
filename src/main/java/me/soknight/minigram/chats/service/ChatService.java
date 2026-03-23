@@ -5,6 +5,7 @@ import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.attribute.ChatMemberRole;
 import me.soknight.minigram.chats.model.attribute.ChatType;
 import me.soknight.minigram.chats.model.attribute.RelationStatus;
+import me.soknight.minigram.chats.model.attribute.RelationType;
 import me.soknight.minigram.chats.model.dto.ChatDto;
 import me.soknight.minigram.chats.model.dto.ChatMemberDto;
 import me.soknight.minigram.chats.model.entity.ChatEntity;
@@ -137,7 +138,7 @@ public class ChatService {
                             "Direct chat must contain exactly one additional member"
                     );
 
-                validateAcceptedRelations(memberIds, "Direct chat can be created only with friends");
+                validateFriendRelations(memberIds, "Direct chat can be created only with friends");
             }
 
             case GROUP -> {
@@ -148,17 +149,17 @@ public class ChatService {
                             "Group chat title must not be blank"
                     );
 
-                validateAcceptedRelations(memberIds, "Only friends can be added to a group chat");
+                validateFriendRelations(memberIds, "Only friends can be added to a group chat");
             }
         }
     }
 
-    private void validateAcceptedRelations(@NonNull Set<UUID> memberIds, @NonNull String message) throws ApiException {
+    private void validateFriendRelations(@NonNull Set<UUID> memberIds, @NonNull String message) throws ApiException {
         for (UUID memberId : memberIds) {
-            var relation = profileRelationsClient.getRelation(memberId);
+            var relation = profileRelationsClient.getRelation(memberId, RelationType.OUTGOING);
             var status = relation.status();
 
-            if (status == RelationStatus.ACCEPTED) continue;
+            if (status == RelationStatus.FRIEND) continue;
 
             throw new ApiException(
                     HttpStatus.FORBIDDEN,
