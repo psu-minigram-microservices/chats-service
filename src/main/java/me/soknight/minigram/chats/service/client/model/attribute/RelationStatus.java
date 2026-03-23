@@ -1,10 +1,11 @@
-package me.soknight.minigram.chats.model.attribute;
+package me.soknight.minigram.chats.service.client.model.attribute;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.jspecify.annotations.NonNull;
+
 import java.util.Arrays;
 
 @Getter
