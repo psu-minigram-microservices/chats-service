@@ -14,10 +14,12 @@ public class ProfileServiceConfig {
     @Bean
     public @NonNull RestClient profileServiceRestClient(
             RestClient.@NonNull Builder restClientBuilder,
-            @NonNull ProfileServiceProperties properties
+            @NonNull ProfileServiceProperties properties,
+            @NonNull ProfileServiceAuthInterceptor authInterceptor
     ) {
         return restClientBuilder
                 .baseUrl(properties.profile())
+                .requestInterceptor(authInterceptor)
                 .build();
     }
 
