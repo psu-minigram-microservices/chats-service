@@ -115,7 +115,7 @@ class ChatMessageControllerApiTest {
     void editMessage_returnsUpdatedMessage() throws Exception {
         long chatId = createDirectChat();
         runAs(USER_1);
-        var message = messageService.sendMessage(USER_1, chatId, new SendMessageRequest("original"));
+        var message = messageService.sendMessage(chatId, new SendMessageRequest("original"));
 
         mockMvc.perform(patch("/api/v1/chats/{chatId}/messages/{messageId}", chatId, message.id())
                         .with(authUser(USER_1))
@@ -134,7 +134,7 @@ class ChatMessageControllerApiTest {
     void editMessage_byAnotherUser_returnsForbidden() throws Exception {
         long chatId = createDirectChat();
         runAs(USER_1);
-        var message = messageService.sendMessage(USER_1, chatId, new SendMessageRequest("original"));
+        var message = messageService.sendMessage(chatId, new SendMessageRequest("original"));
 
         mockMvc.perform(patch("/api/v1/chats/{chatId}/messages/{messageId}", chatId, message.id())
                         .with(authUser(USER_2))
@@ -152,7 +152,7 @@ class ChatMessageControllerApiTest {
     void getMessages_paginationWithCustomPageSize() throws Exception {
         long chatId = createDirectChat();
         for (int i = 0; i < 5; i++)
-            messageService.sendMessage(USER_1, chatId, new SendMessageRequest("message " + i));
+            messageService.sendMessage(chatId, new SendMessageRequest("message " + i));
 
         mockMvc.perform(get("/api/v1/chats/{chatId}/messages", chatId)
                         .with(authUser(USER_1))
@@ -178,8 +178,8 @@ class ChatMessageControllerApiTest {
     @Test
     void getMessages_defaultSortIsNewestFirst() throws Exception {
         long chatId = createDirectChat();
-        var first = messageService.sendMessage(USER_1, chatId, new SendMessageRequest("first"));
-        var second = messageService.sendMessage(USER_1, chatId, new SendMessageRequest("second"));
+        var first = messageService.sendMessage(chatId, new SendMessageRequest("first"));
+        var second = messageService.sendMessage(chatId, new SendMessageRequest("second"));
 
         mockMvc.perform(get("/api/v1/chats/{chatId}/messages", chatId)
                         .with(authUser(USER_1)))
@@ -192,7 +192,7 @@ class ChatMessageControllerApiTest {
     void deleteMessage_returnsDeletedMessage() throws Exception {
         long chatId = createDirectChat();
         runAs(USER_1);
-        var message = messageService.sendMessage(USER_1, chatId, new SendMessageRequest("to delete"));
+        var message = messageService.sendMessage(chatId, new SendMessageRequest("to delete"));
 
         mockMvc.perform(delete("/api/v1/chats/{chatId}/messages/{messageId}", chatId, message.id())
                         .with(authUser(USER_1)))
@@ -207,7 +207,7 @@ class ChatMessageControllerApiTest {
 
     private long createDirectChat() throws ApiException {
         runAs(USER_1);
-        return chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2))).id();
+        return chatService.createChat(new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2))).id();
     }
 
     private RequestPostProcessor authUser(UUID userId) {

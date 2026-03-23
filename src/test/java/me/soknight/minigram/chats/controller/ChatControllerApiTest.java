@@ -132,11 +132,11 @@ class ChatControllerApiTest {
     @Test
     void listChats_returnsOnlyUserChats() throws Exception {
         runAs(USER_1);
-        chatService.createChat(USER_1, new CreateChatRequest(ChatType.SAVED, null, null));
+        chatService.createChat(new CreateChatRequest(ChatType.SAVED, null, null));
         runAs(USER_2);
-        chatService.createChat(USER_2, new CreateChatRequest(ChatType.SAVED, null, null));
+        chatService.createChat(new CreateChatRequest(ChatType.SAVED, null, null));
         runAs(USER_1);
-        chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
+        chatService.createChat(new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
 
         mockMvc.perform(get("/api/v1/chats").with(authUser(USER_1)))
                 .andExpect(status().isOk())
@@ -153,7 +153,7 @@ class ChatControllerApiTest {
     void listChats_paginationWithCustomPageSize() throws Exception {
         runAs(USER_1);
         for (int i = 0; i < 5; i++)
-            chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Chat " + i, List.of(USER_2)));
+            chatService.createChat(new CreateChatRequest(ChatType.GROUP, "Chat " + i, List.of(USER_2)));
 
         mockMvc.perform(get("/api/v1/chats")
                         .with(authUser(USER_1))
@@ -179,7 +179,7 @@ class ChatControllerApiTest {
     @Test
     void listChats_emptyPage_beyondLastPage() throws Exception {
         runAs(USER_1);
-        chatService.createChat(USER_1, new CreateChatRequest(ChatType.SAVED, null, null));
+        chatService.createChat(new CreateChatRequest(ChatType.SAVED, null, null));
 
         mockMvc.perform(get("/api/v1/chats")
                         .with(authUser(USER_1))

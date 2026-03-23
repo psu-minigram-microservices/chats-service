@@ -94,7 +94,7 @@ class WebSocketIntegrationTest {
         subscribeToEvents();
 
         runAs(USER_1);
-        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
 
         var event = pollEvent();
         assertThat(event).isNotNull();
@@ -105,10 +105,10 @@ class WebSocketIntegrationTest {
     @Test
     void editChat_receivesChatUpdatedEvent() throws Exception {
         runAs(USER_1);
-        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Original", List.of(USER_2)));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.GROUP, "Original", List.of(USER_2)));
         subscribeToEvents();
 
-        chatService.editChat(USER_1, chat.id(), new EditChatRequest("Updated"));
+        chatService.editChat(chat.id(), new EditChatRequest("Updated"));
 
         var event = pollEvent();
         assertThat(event).isNotNull();
@@ -119,10 +119,10 @@ class WebSocketIntegrationTest {
     @Test
     void deleteChat_receivesChatDeletedEvent() throws Exception {
         runAs(USER_1);
-        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
         subscribeToEvents();
 
-        chatService.deleteChat(USER_1, chat.id());
+        chatService.deleteChat(chat.id());
 
         var event = pollEvent();
         assertThat(event).isNotNull();
@@ -133,10 +133,10 @@ class WebSocketIntegrationTest {
     @Test
     void sendMessage_receivesMessageSentEvent() throws Exception {
         runAs(USER_1);
-        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
         subscribeToEvents();
 
-        messageService.sendMessage(USER_1, chat.id(), new SendMessageRequest("hello"));
+        messageService.sendMessage(chat.id(), new SendMessageRequest("hello"));
 
         var event = pollEvent();
         assertThat(event).isNotNull();
@@ -147,11 +147,11 @@ class WebSocketIntegrationTest {
     @Test
     void editMessage_receivesMessageEditedEvent() throws Exception {
         runAs(USER_1);
-        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
-        var message = messageService.sendMessage(USER_1, chat.id(), new SendMessageRequest("original"));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
+        var message = messageService.sendMessage(chat.id(), new SendMessageRequest("original"));
         subscribeToEvents();
 
-        messageService.editMessage(USER_1, chat.id(), message.id(), new EditMessageRequest("updated"));
+        messageService.editMessage(chat.id(), message.id(), new EditMessageRequest("updated"));
 
         var event = pollEvent();
         assertThat(event).isNotNull();
@@ -161,11 +161,11 @@ class WebSocketIntegrationTest {
     @Test
     void deleteMessage_receivesMessageDeletedEvent() throws Exception {
         runAs(USER_1);
-        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
-        var message = messageService.sendMessage(USER_1, chat.id(), new SendMessageRequest("to delete"));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
+        var message = messageService.sendMessage(chat.id(), new SendMessageRequest("to delete"));
         subscribeToEvents();
 
-        messageService.deleteMessage(USER_1, chat.id(), message.id());
+        messageService.deleteMessage(chat.id(), message.id());
 
         var event = pollEvent();
         assertThat(event).isNotNull();
@@ -176,10 +176,10 @@ class WebSocketIntegrationTest {
     @Test
     void inviteUser_receivesMemberJoinedEvent() throws Exception {
         runAs(USER_1);
-        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
         subscribeToEvents();
 
-        chatMemberService.inviteUser(USER_1, chat.id(), USER_3);
+        chatMemberService.inviteUser(chat.id(), USER_3);
 
         var event = pollEvent();
         assertThat(event).isNotNull();
@@ -190,11 +190,11 @@ class WebSocketIntegrationTest {
     @Test
     void leaveChat_receivesMemberLeftEvent() throws Exception {
         runAs(USER_1);
-        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
         subscribeToEvents();
 
         runAs(USER_2);
-        chatMemberService.leaveChat(USER_2, chat.id());
+        chatMemberService.leaveChat(chat.id());
 
         var event = pollEvent();
         assertThat(event).isNotNull();
@@ -204,10 +204,10 @@ class WebSocketIntegrationTest {
     @Test
     void kickUser_receivesMemberLeftEvent() throws Exception {
         runAs(USER_1);
-        var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2, USER_3)));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2, USER_3)));
         subscribeToEvents();
 
-        chatMemberService.kickUser(USER_1, chat.id(), USER_2);
+        chatMemberService.kickUser(chat.id(), USER_2);
 
         var event = pollEvent();
         assertThat(event).isNotNull();
@@ -218,10 +218,10 @@ class WebSocketIntegrationTest {
     void nonMember_doesNotReceiveEvent() throws Exception {
         // user 1 is connected, but not a member of this chat
         runAs(USER_2);
-        var chat = chatService.createChat(USER_2, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_3)));
+        var chat = chatService.createChat(new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_3)));
         subscribeToEvents();
 
-        messageService.sendMessage(USER_2, chat.id(), new SendMessageRequest("secret"));
+        messageService.sendMessage(chat.id(), new SendMessageRequest("secret"));
 
         var event = events.poll(2, TimeUnit.SECONDS);
         assertThat(event).isNull();

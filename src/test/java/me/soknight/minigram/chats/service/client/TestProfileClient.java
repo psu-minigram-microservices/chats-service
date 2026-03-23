@@ -1,5 +1,6 @@
 package me.soknight.minigram.chats.service.client;
 
+import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.service.client.model.attribute.RelationStatus;
 import me.soknight.minigram.chats.service.client.model.attribute.RelationType;
 import me.soknight.minigram.chats.service.client.model.dto.ProfileDto;
@@ -7,6 +8,7 @@ import me.soknight.minigram.chats.service.client.model.dto.ProfilePageDto;
 import me.soknight.minigram.chats.service.client.model.dto.ProfileRelationDto;
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -50,10 +52,17 @@ public class TestProfileClient extends ProfileClient {
     }
 
     @Override
-    public @NonNull ProfileDto getMyProfile() {
+    public @NonNull ProfileDto getMyProfile() throws ApiException {
         var auth = SecurityContextHolder.getContext().getAuthentication();
-        var userId = UUID.fromString(auth.getName());
-        return getProfile(userId);
+        if (auth == null)
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "invalid_token_subject", "No authentication context");
+
+        try {
+            var userId = UUID.fromString(auth.getName());
+            return getProfile(userId);
+        } catch (IllegalArgumentException e) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "invalid_token_subject", "Invalid UUID in principal: {0}", auth.getName());
+        }
     }
 
     @Override
