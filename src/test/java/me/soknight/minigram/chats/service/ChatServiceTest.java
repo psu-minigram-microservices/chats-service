@@ -55,7 +55,7 @@ class ChatServiceTest {
         assertThat(chat.title()).isNull();
         assertThat(chat.ownerId()).isEqualTo(USER_1);
         assertThat(chat.members()).hasSize(1);
-        assertThat(chat.members().getFirst().userId()).isEqualTo(USER_1);
+        assertThat(chat.members().getFirst().profileId()).isEqualTo(USER_1);
         assertThat(chat.members().getFirst().name()).isEqualTo("User 00000000");
         assertThat(chat.members().getFirst().photoUrl()).isEqualTo("https://example.com/" + USER_1 + ".png");
         assertThat(chat.members().getFirst().role()).isEqualTo(ChatMemberRole.OWNER);

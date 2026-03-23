@@ -109,12 +109,12 @@ public class ChatService {
             throw new ApiException(HttpStatus.FORBIDDEN, "access_denied", "Only chat owner can delete the chat");
 
         var dto = chatDtoMapper.toChatDto(chat);
-        var memberUserIds = dto.members().stream()
-                .map(ChatMemberDto::userId)
+        var memberProfileIds = dto.members().stream()
+                .map(ChatMemberDto::profileId)
                 .toList();
 
         chatRepository.delete(chat);
-        eventPublisher.publishToUsers(memberUserIds, ChatEvent.chatDeleted(dto));
+        eventPublisher.publishToUsers(memberProfileIds, ChatEvent.chatDeleted(dto));
         return dto;
     }
 

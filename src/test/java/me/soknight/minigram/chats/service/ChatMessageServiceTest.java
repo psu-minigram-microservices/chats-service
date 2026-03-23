@@ -61,7 +61,7 @@ class ChatMessageServiceTest {
         var message = messageService.sendMessage(USER_1, chat.id(), new SendMessageRequest("Hello!"));
 
         assertThat(message.content()).isEqualTo("Hello!");
-        assertThat(message.sender().userId()).isEqualTo(USER_1);
+        assertThat(message.sender().profileId()).isEqualTo(USER_1);
         assertThat(message.sender().name()).isEqualTo("User 00000000");
         assertThat(message.sender().photoUrl()).isEqualTo("https://example.com/" + USER_1 + ".png");
         assertThat(message.chat().id()).isEqualTo(chat.id());
