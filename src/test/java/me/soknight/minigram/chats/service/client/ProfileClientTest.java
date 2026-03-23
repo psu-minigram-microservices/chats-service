@@ -1,8 +1,8 @@
 package me.soknight.minigram.chats.service.client;
 
 import me.soknight.minigram.chats.exception.ApiException;
-import me.soknight.minigram.chats.model.attribute.RelationStatus;
-import me.soknight.minigram.chats.model.attribute.RelationType;
+import me.soknight.minigram.chats.service.client.model.attribute.RelationStatus;
+import me.soknight.minigram.chats.service.client.model.attribute.RelationType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
@@ -16,21 +16,42 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-class ProfileRelationsClientTest {
+class ProfileClientTest {
 
     private static final String BASE_URL = "http://localhost:5001";
-    private static final UUID RECEIVER_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
+    private static final UUID USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
 
     private MockRestServiceServer server;
-    private ProfileRelationsClient client;
+    private ProfileClient client;
 
     @BeforeEach
     void setUp() {
         var builder = RestClient.builder().baseUrl(BASE_URL);
         server = MockRestServiceServer.bindTo(builder).build();
-        client = new ProfileRelationsClient(builder.build());
+        client = new ProfileClient(builder.build());
+    }
+
+    @Test
+    void getProfile_returnsProfile() throws ApiException {
+        server.expect(requestTo(BASE_URL + "/api/v1/profiles/" + USER_ID))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("""
+                        {
+                          "id": "%s",
+                          "name": "Bob",
+                          "photoUrl": "https://example.com/avatar.png"
+                        }
+                        """.formatted(USER_ID), MediaType.APPLICATION_JSON));
+
+        var profile = client.getProfile(USER_ID);
+
+        assertThat(profile.userId()).isEqualTo(USER_ID);
+        assertThat(profile.name()).isEqualTo("Bob");
+        assertThat(profile.photoUrl()).isEqualTo("https://example.com/avatar.png");
+        server.verify();
     }
 
     @Test
@@ -48,20 +69,20 @@ class ProfileRelationsClientTest {
                             }
                           ]
                         }
-                        """.formatted(RECEIVER_ID), MediaType.APPLICATION_JSON));
+                        """.formatted(USER_ID), MediaType.APPLICATION_JSON));
 
         var response = client.getRelations(RelationStatus.FRIEND, RelationType.OUTGOING, 2, 50);
 
         assertThat(response.count()).isEqualTo(1);
         assertThat(response.data()).hasSize(1);
-        assertThat(response.data().getFirst().userId()).isEqualTo(RECEIVER_ID);
+        assertThat(response.data().getFirst().userId()).isEqualTo(USER_ID);
         assertThat(response.data().getFirst().name()).isEqualTo("Bob");
         server.verify();
     }
 
     @Test
     void getRelation_returnsRelation() throws ApiException {
-        server.expect(requestTo(BASE_URL + "/api/v1/profiles/relations/" + RECEIVER_ID + "?type=Outgoing"))
+        server.expect(requestTo(BASE_URL + "/api/v1/profiles/relations/" + USER_ID + "?type=Outgoing"))
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess("""
                         {
@@ -72,22 +93,22 @@ class ProfileRelationsClientTest {
                             "photoUrl": null
                           }
                         }
-                        """.formatted(RECEIVER_ID), MediaType.APPLICATION_JSON));
+                        """.formatted(USER_ID), MediaType.APPLICATION_JSON));
 
-        var relation = client.getRelation(RECEIVER_ID, RelationType.OUTGOING);
+        var relation = client.getRelation(USER_ID, RelationType.OUTGOING);
 
         assertThat(relation.status()).isEqualTo(RelationStatus.FRIEND);
-        assertThat(relation.profile().userId()).isEqualTo(RECEIVER_ID);
+        assertThat(relation.profile().userId()).isEqualTo(USER_ID);
         server.verify();
     }
 
     @Test
     void getRelation_whenProfileServiceFails_throwsApiException() {
-        server.expect(requestTo(BASE_URL + "/api/v1/profiles/relations/" + RECEIVER_ID + "?type=Outgoing"))
+        server.expect(requestTo(BASE_URL + "/api/v1/profiles/relations/" + USER_ID + "?type=Outgoing"))
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(withServerError());
 
-        assertThatThrownBy(() -> client.getRelation(RECEIVER_ID, RelationType.OUTGOING))
+        assertThatThrownBy(() -> client.getRelation(USER_ID, RelationType.OUTGOING))
                 .isInstanceOf(ApiException.class)
                 .satisfies(ex -> {
                     var apiException = (ApiException) ex;

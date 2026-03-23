@@ -3,12 +3,12 @@ package me.soknight.minigram.chats.service;
 import jakarta.persistence.EntityManager;
 import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.attribute.ChatType;
-import me.soknight.minigram.chats.model.attribute.RelationStatus;
 import me.soknight.minigram.chats.model.dto.ChatDto;
 import me.soknight.minigram.chats.model.request.CreateChatRequest;
 import me.soknight.minigram.chats.model.request.EditMessageRequest;
 import me.soknight.minigram.chats.model.request.SendMessageRequest;
-import me.soknight.minigram.chats.service.client.TestProfileRelationsClient;
+import me.soknight.minigram.chats.service.client.TestProfileClient;
+import me.soknight.minigram.chats.service.client.model.attribute.RelationStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,12 +33,12 @@ class ChatMessageServiceTest {
 
     @Autowired ChatMessageService messageService;
     @Autowired ChatService chatService;
-    @Autowired TestProfileRelationsClient profileRelationsClient;
+    @Autowired TestProfileClient profileClient;
     @Autowired EntityManager em;
 
     @BeforeEach
     void resetRelations() {
-        profileRelationsClient.reset();
+        profileClient.reset();
     }
 
     private void flushAndClear() {
@@ -62,6 +62,8 @@ class ChatMessageServiceTest {
 
         assertThat(message.content()).isEqualTo("Hello!");
         assertThat(message.sender().userId()).isEqualTo(USER_1);
+        assertThat(message.sender().name()).isEqualTo("User 00000000");
+        assertThat(message.sender().photoUrl()).isEqualTo("https://example.com/" + USER_1 + ".png");
         assertThat(message.chat().id()).isEqualTo(chat.id());
         flushAndClear();
 
@@ -102,7 +104,7 @@ class ChatMessageServiceTest {
     @Test
     void sendMessage_whenDirectRelationNotAccepted_throws() throws ApiException {
         var chat = createDirectChat();
-        profileRelationsClient.setStatus(USER_2, RelationStatus.BLOCKED);
+        profileClient.setStatus(USER_2, RelationStatus.BLOCKED);
 
         assertThatThrownBy(() -> messageService.sendMessage(USER_1, chat.id(), new SendMessageRequest("Hello!")))
                 .isInstanceOf(ApiException.class);

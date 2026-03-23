@@ -2,12 +2,12 @@ package me.soknight.minigram.chats.controller;
 
 import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.attribute.ChatType;
-import me.soknight.minigram.chats.model.attribute.RelationStatus;
 import me.soknight.minigram.chats.model.request.CreateChatRequest;
 import me.soknight.minigram.chats.model.request.SendMessageRequest;
 import me.soknight.minigram.chats.service.ChatMessageService;
 import me.soknight.minigram.chats.service.ChatService;
-import me.soknight.minigram.chats.service.client.TestProfileRelationsClient;
+import me.soknight.minigram.chats.service.client.TestProfileClient;
+import me.soknight.minigram.chats.service.client.model.attribute.RelationStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,11 +37,11 @@ class ChatMessageControllerApiTest {
     @Autowired MockMvc mockMvc;
     @Autowired ChatService chatService;
     @Autowired ChatMessageService messageService;
-    @Autowired TestProfileRelationsClient profileRelationsClient;
+    @Autowired TestProfileClient profileClient;
 
     @BeforeEach
     void resetRelations() {
-        profileRelationsClient.reset();
+        profileClient.reset();
     }
 
     @Test
@@ -59,6 +59,8 @@ class ChatMessageControllerApiTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.content").value("hello"))
                 .andExpect(jsonPath("$.sender.user_id").value(USER_1.toString()))
+                .andExpect(jsonPath("$.sender.name").value("User 00000000"))
+                .andExpect(jsonPath("$.sender.photoUrl").value("https://example.com/" + USER_1 + ".png"))
                 .andExpect(jsonPath("$.chat.id").value(chatId));
     }
 
@@ -81,7 +83,7 @@ class ChatMessageControllerApiTest {
     @Test
     void sendMessage_whenDirectRelationNotAccepted_returnsForbidden() throws Exception {
         long chatId = createDirectChat();
-        profileRelationsClient.setStatus(USER_2, RelationStatus.BLOCKED);
+        profileClient.setStatus(USER_2, RelationStatus.BLOCKED);
 
         mockMvc.perform(post("/api/v1/chats/{chatId}/messages", chatId)
                         .with(authUser(USER_1))
