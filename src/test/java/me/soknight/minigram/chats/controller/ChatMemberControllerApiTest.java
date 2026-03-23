@@ -64,7 +64,7 @@ class ChatMemberControllerApiTest {
     @Test
     void inviteUser_whenRelationNotAccepted_returnsForbidden() throws Exception {
         var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
-        profileRelationsClient.setStatus(USER_3, RelationStatus.PENDING);
+        profileRelationsClient.setStatus(USER_3, RelationStatus.NONE);
 
         mockMvc.perform(post("/api/v1/chats/{chatId}/members/{userId}", chat.id(), USER_3)
                         .with(authUser(USER_1)))

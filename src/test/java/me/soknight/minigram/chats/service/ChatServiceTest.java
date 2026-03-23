@@ -109,7 +109,7 @@ class ChatServiceTest {
 
     @Test
     void createGroupChat_whenMemberRelationNotAccepted_throws() {
-        profileRelationsClient.setStatus(USER_3, RelationStatus.PENDING);
+        profileRelationsClient.setStatus(USER_3, RelationStatus.NONE);
 
         assertThatThrownBy(() -> chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test Group", List.of(USER_2, USER_3))))
                 .isInstanceOf(ApiException.class);

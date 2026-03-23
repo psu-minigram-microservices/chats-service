@@ -80,7 +80,7 @@ class ChatControllerApiTest {
 
     @Test
     void createDirectChat_whenRelationNotAccepted_returnsForbidden() throws Exception {
-        profileRelationsClient.setStatus(USER_2, RelationStatus.REJECTED);
+        profileRelationsClient.setStatus(USER_2, RelationStatus.NONE);
 
         mockMvc.perform(post("/api/v1/chats")
                         .with(authUser(USER_1))
