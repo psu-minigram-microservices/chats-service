@@ -4,20 +4,22 @@ import lombok.AllArgsConstructor;
 import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.attribute.ChatMemberRole;
 import me.soknight.minigram.chats.model.attribute.ChatType;
-import me.soknight.minigram.chats.model.attribute.RelationStatus;
-import me.soknight.minigram.chats.model.attribute.RelationType;
 import me.soknight.minigram.chats.model.dto.ChatDto;
 import me.soknight.minigram.chats.model.dto.ChatMemberDto;
+import me.soknight.minigram.chats.model.dto.mapper.ChatDtoMapper;
 import me.soknight.minigram.chats.model.entity.ChatEntity;
 import me.soknight.minigram.chats.model.entity.ChatMemberEntity;
 import me.soknight.minigram.chats.model.request.CreateChatRequest;
 import me.soknight.minigram.chats.model.request.EditChatRequest;
 import me.soknight.minigram.chats.model.websocket.ChatEvent;
 import me.soknight.minigram.chats.repository.ChatRepository;
-import me.soknight.minigram.chats.service.client.ProfileRelationsClient;
+import me.soknight.minigram.chats.service.client.ProfileClient;
+import me.soknight.minigram.chats.service.client.model.attribute.RelationStatus;
+import me.soknight.minigram.chats.service.client.model.attribute.RelationType;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -32,17 +34,28 @@ import java.util.UUID;
 public class ChatService {
 
     private final @NonNull ChatRepository chatRepository;
-    private final @NonNull ProfileRelationsClient profileRelationsClient;
+    private final @NonNull ProfileClient profileClient;
     private final @NonNull ChatEventPublisher eventPublisher;
+    private final @NonNull ChatDtoMapper chatDtoMapper;
 
     @Transactional(readOnly = true)
-    public @NonNull Page<ChatDto> getChats(UUID userId, @NonNull Pageable pageable) {
-        return chatRepository.findAllByMemberUserId(userId, pageable).map(ChatDto::fromEntity);
+    public @NonNull Page<ChatDto> getChats(UUID userId, @NonNull Pageable pageable) throws ApiException {
+        var page = chatRepository.findAllByMemberUserId(userId, pageable);
+
+        try {
+            var chats = page.getContent().stream()
+                    .map(this::toUncheckedChatDto)
+                    .toList();
+
+            return new PageImpl<>(chats, pageable, page.getTotalElements());
+        } catch (ChatDtoMapper.ChatDtoMappingException ex) {
+            throw ex.apiException();
+        }
     }
 
     @Transactional(readOnly = true)
     public @NonNull ChatDto getChat(UUID userId, long chatId) throws ApiException {
-        return ChatDto.fromEntity(getAccessibleChat(chatId, userId));
+        return chatDtoMapper.toChatDto(getAccessibleChat(chatId, userId));
     }
 
     @Transactional
@@ -63,7 +76,7 @@ public class ChatService {
         for (UUID memberId : memberIds)
             chat.getMembers().add(new ChatMemberEntity(chat, memberId, ChatMemberRole.MEMBER));
 
-        var dto = ChatDto.fromEntity(chatRepository.save(chat));
+        var dto = chatDtoMapper.toChatDto(chatRepository.save(chat));
         eventPublisher.publish(dto.id(), ChatEvent.chatCreated(dto));
         return dto;
     }
@@ -83,7 +96,7 @@ public class ChatService {
             chat.updateTitle(title);
         }
 
-        var dto = ChatDto.fromEntity(chat);
+        var dto = chatDtoMapper.toChatDto(chat);
         eventPublisher.publish(dto.id(), ChatEvent.chatUpdated(dto));
         return dto;
     }
@@ -95,7 +108,7 @@ public class ChatService {
         if (!chat.getOwnerId().equals(userId))
             throw new ApiException(HttpStatus.FORBIDDEN, "access_denied", "Only chat owner can delete the chat");
 
-        var dto = ChatDto.fromEntity(chat);
+        var dto = chatDtoMapper.toChatDto(chat);
         var memberUserIds = dto.members().stream()
                 .map(ChatMemberDto::userId)
                 .toList();
@@ -156,7 +169,7 @@ public class ChatService {
 
     private void validateFriendRelations(@NonNull Set<UUID> memberIds, @NonNull String message) throws ApiException {
         for (UUID memberId : memberIds) {
-            var relation = profileRelationsClient.getRelation(memberId, RelationType.OUTGOING);
+            var relation = profileClient.getRelation(memberId, RelationType.OUTGOING);
             var status = relation.status();
 
             if (status == RelationStatus.FRIEND) continue;
@@ -179,6 +192,14 @@ public class ChatService {
 
     private boolean hasBlankTitle(@Nullable String value) {
         return value == null || value.isBlank();
+    }
+
+    private @NonNull ChatDto toUncheckedChatDto(@NonNull ChatEntity chat) {
+        try {
+            return chatDtoMapper.toChatDto(chat);
+        } catch (ApiException ex) {
+            throw new ChatDtoMapper.ChatDtoMappingException(ex);
+        }
     }
 
 }

@@ -2,10 +2,11 @@ package me.soknight.minigram.chats.service.client;
 
 import lombok.AllArgsConstructor;
 import me.soknight.minigram.chats.exception.ApiException;
-import me.soknight.minigram.chats.model.attribute.RelationStatus;
-import me.soknight.minigram.chats.model.attribute.RelationType;
-import me.soknight.minigram.chats.model.dto.client.ProfilePageDto;
-import me.soknight.minigram.chats.model.dto.client.ProfileRelationDto;
+import me.soknight.minigram.chats.service.client.model.attribute.RelationStatus;
+import me.soknight.minigram.chats.service.client.model.attribute.RelationType;
+import me.soknight.minigram.chats.service.client.model.dto.ProfileDto;
+import me.soknight.minigram.chats.service.client.model.dto.ProfilePageDto;
+import me.soknight.minigram.chats.service.client.model.dto.ProfileRelationDto;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
@@ -17,7 +18,7 @@ import java.util.UUID;
 
 @Service
 @AllArgsConstructor
-public class ProfileRelationsClient {
+public class ProfileClient {
 
     private final @NonNull RestClient profileServiceRestClient;
 
@@ -86,6 +87,32 @@ public class ProfileRelationsClient {
                     "profile_service_unavailable",
                     "Failed to fetch relation with user {0} from profile service",
                     receiverId
+            ).withPayload(ex.getMessage());
+        }
+    }
+
+    public @NonNull ProfileDto getProfile(UUID id) throws ApiException {
+        try {
+            var profile = profileServiceRestClient.get()
+                    .uri("/api/v1/profiles/{id}", id)
+                    .retrieve()
+                    .body(ProfileDto.class);
+
+            if (profile == null)
+                throw new ApiException(
+                        HttpStatus.BAD_GATEWAY,
+                        "profile_service_invalid_response",
+                        "Profile service returned empty profile response for user {0}",
+                        id
+                );
+
+            return profile;
+        } catch (RestClientException ex) {
+            throw new ApiException(
+                    HttpStatus.BAD_GATEWAY,
+                    "profile_service_unavailable",
+                    "Failed to fetch profile for user {0} from profile service",
+                    id
             ).withPayload(ex.getMessage());
         }
     }
