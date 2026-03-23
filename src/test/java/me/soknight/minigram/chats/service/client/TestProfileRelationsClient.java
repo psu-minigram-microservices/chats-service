@@ -1,6 +1,7 @@
 package me.soknight.minigram.chats.service.client;
 
 import me.soknight.minigram.chats.model.attribute.RelationStatus;
+import me.soknight.minigram.chats.model.attribute.RelationType;
 import me.soknight.minigram.chats.model.dto.client.ProfileDto;
 import me.soknight.minigram.chats.model.dto.client.ProfileRelationDto;
 import org.jspecify.annotations.NonNull;
@@ -23,8 +24,8 @@ public class TestProfileRelationsClient extends ProfileRelationsClient {
     }
 
     @Override
-    public @NonNull ProfileRelationDto getRelation(UUID receiverId) {
-        var status = statuses.getOrDefault(receiverId, RelationStatus.ACCEPTED);
+    public @NonNull ProfileRelationDto getRelation(UUID receiverId, @NonNull RelationType type) {
+        var status = statuses.getOrDefault(receiverId, RelationStatus.FRIEND);
         return new ProfileRelationDto(status, new ProfileDto(receiverId, "Test User", null));
     }
 

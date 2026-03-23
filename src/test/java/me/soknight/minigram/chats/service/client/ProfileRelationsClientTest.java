@@ -2,6 +2,7 @@ package me.soknight.minigram.chats.service.client;
 
 import me.soknight.minigram.chats.exception.ApiException;
 import me.soknight.minigram.chats.model.attribute.RelationStatus;
+import me.soknight.minigram.chats.model.attribute.RelationType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
@@ -34,14 +35,14 @@ class ProfileRelationsClientTest {
 
     @Test
     void getRelations_returnsProfilePage() throws ApiException {
-        server.expect(requestTo(BASE_URL + "/api/v1/profiles/relations?status=Accepted&Page=2&PerPage=50"))
+        server.expect(requestTo(BASE_URL + "/api/v1/profiles/relations?status=Friend&type=Outgoing&Page=2&PerPage=50"))
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess("""
                         {
                           "count": 1,
                           "data": [
                             {
-                              "userId": "%s",
+                              "id": "%s",
                               "name": "Bob",
                               "photoUrl": "https://example.com/avatar.png"
                             }
@@ -49,7 +50,7 @@ class ProfileRelationsClientTest {
                         }
                         """.formatted(RECEIVER_ID), MediaType.APPLICATION_JSON));
 
-        var response = client.getRelations(RelationStatus.ACCEPTED, 2, 50);
+        var response = client.getRelations(RelationStatus.FRIEND, RelationType.OUTGOING, 2, 50);
 
         assertThat(response.count()).isEqualTo(1);
         assertThat(response.data()).hasSize(1);
@@ -60,55 +61,33 @@ class ProfileRelationsClientTest {
 
     @Test
     void getRelation_returnsRelation() throws ApiException {
-        server.expect(requestTo(BASE_URL + "/api/v1/profiles/relations/" + RECEIVER_ID))
+        server.expect(requestTo(BASE_URL + "/api/v1/profiles/relations/" + RECEIVER_ID + "?type=Outgoing"))
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess("""
                         {
-                          "status": "Accepted",
+                          "status": "Friend",
                           "profile": {
-                            "userId": "%s",
+                            "id": "%s",
                             "name": "Bob",
                             "photoUrl": null
                           }
                         }
                         """.formatted(RECEIVER_ID), MediaType.APPLICATION_JSON));
 
-        var relation = client.getRelation(RECEIVER_ID);
+        var relation = client.getRelation(RECEIVER_ID, RelationType.OUTGOING);
 
-        assertThat(relation.status()).isEqualTo(RelationStatus.ACCEPTED);
+        assertThat(relation.status()).isEqualTo(RelationStatus.FRIEND);
         assertThat(relation.profile().userId()).isEqualTo(RECEIVER_ID);
         server.verify();
     }
 
     @Test
-    void setRelation_sendsPostRequest() throws ApiException {
-        server.expect(requestTo(BASE_URL + "/api/v1/profiles/relations/" + RECEIVER_ID + "?status=Blocked"))
-                .andExpect(method(HttpMethod.POST))
-                .andRespond(withNoContent());
-
-        client.setRelation(RECEIVER_ID, RelationStatus.BLOCKED);
-
-        server.verify();
-    }
-
-    @Test
-    void deleteRelation_sendsDeleteRequest() throws ApiException {
-        server.expect(requestTo(BASE_URL + "/api/v1/profiles/relations/" + RECEIVER_ID))
-                .andExpect(method(HttpMethod.DELETE))
-                .andRespond(withNoContent());
-
-        client.deleteRelation(RECEIVER_ID);
-
-        server.verify();
-    }
-
-    @Test
     void getRelation_whenProfileServiceFails_throwsApiException() {
-        server.expect(requestTo(BASE_URL + "/api/v1/profiles/relations/" + RECEIVER_ID))
+        server.expect(requestTo(BASE_URL + "/api/v1/profiles/relations/" + RECEIVER_ID + "?type=Outgoing"))
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(withServerError());
 
-        assertThatThrownBy(() -> client.getRelation(RECEIVER_ID))
+        assertThatThrownBy(() -> client.getRelation(RECEIVER_ID, RelationType.OUTGOING))
                 .isInstanceOf(ApiException.class)
                 .satisfies(ex -> {
                     var apiException = (ApiException) ex;
