@@ -8,12 +8,15 @@ import me.soknight.minigram.chats.service.ChatMessageService;
 import me.soknight.minigram.chats.service.ChatService;
 import me.soknight.minigram.chats.service.client.TestProfileClient;
 import me.soknight.minigram.chats.service.client.model.attribute.RelationStatus;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +47,17 @@ class ChatMessageControllerApiTest {
         profileClient.reset();
     }
 
+    @AfterEach
+    void clearAuth() {
+        SecurityContextHolder.clearContext();
+    }
+
+    private void runAs(UUID userId) {
+        SecurityContextHolder.getContext().setAuthentication(
+                new TestingAuthenticationToken(userId.toString(), null)
+        );
+    }
+
     @Test
     void sendMessage_returnsCreatedMessage() throws Exception {
         long chatId = createDirectChat();
@@ -58,7 +72,7 @@ class ChatMessageControllerApiTest {
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.content").value("hello"))
-                .andExpect(jsonPath("$.sender.user_id").value(USER_1.toString()))
+                .andExpect(jsonPath("$.sender.profile_id").value(USER_1.toString()))
                 .andExpect(jsonPath("$.sender.name").value("User 00000000"))
                 .andExpect(jsonPath("$.sender.photoUrl").value("https://example.com/" + USER_1 + ".png"))
                 .andExpect(jsonPath("$.chat.id").value(chatId));
@@ -100,6 +114,7 @@ class ChatMessageControllerApiTest {
     @Test
     void editMessage_returnsUpdatedMessage() throws Exception {
         long chatId = createDirectChat();
+        runAs(USER_1);
         var message = messageService.sendMessage(USER_1, chatId, new SendMessageRequest("original"));
 
         mockMvc.perform(patch("/api/v1/chats/{chatId}/messages/{messageId}", chatId, message.id())
@@ -118,6 +133,7 @@ class ChatMessageControllerApiTest {
     @Test
     void editMessage_byAnotherUser_returnsForbidden() throws Exception {
         long chatId = createDirectChat();
+        runAs(USER_1);
         var message = messageService.sendMessage(USER_1, chatId, new SendMessageRequest("original"));
 
         mockMvc.perform(patch("/api/v1/chats/{chatId}/messages/{messageId}", chatId, message.id())
@@ -175,6 +191,7 @@ class ChatMessageControllerApiTest {
     @Test
     void deleteMessage_returnsDeletedMessage() throws Exception {
         long chatId = createDirectChat();
+        runAs(USER_1);
         var message = messageService.sendMessage(USER_1, chatId, new SendMessageRequest("to delete"));
 
         mockMvc.perform(delete("/api/v1/chats/{chatId}/messages/{messageId}", chatId, message.id())
@@ -189,6 +206,7 @@ class ChatMessageControllerApiTest {
     }
 
     private long createDirectChat() throws ApiException {
+        runAs(USER_1);
         return chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2))).id();
     }
 

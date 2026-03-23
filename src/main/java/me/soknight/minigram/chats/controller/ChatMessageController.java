@@ -10,13 +10,11 @@ import me.soknight.minigram.chats.model.request.EditMessageRequest;
 import me.soknight.minigram.chats.model.request.SendMessageRequest;
 import me.soknight.minigram.chats.service.ChatMessageService;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/chats")
 @AllArgsConstructor
 @Tag(name = "Chat Messages", description = "Manage messages in chats: send, view, edit and delete")
-public class ChatMessageController extends ApiControllerBase {
+public class ChatMessageController {
 
     private final @NonNull ChatMessageService chatMessageService;
 
@@ -34,20 +32,18 @@ public class ChatMessageController extends ApiControllerBase {
     @GetMapping("/{chat_id}/messages")
     public @NonNull Page<ChatMessageDto> getMessages(
             @PathVariable("chat_id") @Positive long chatId,
-            @PageableDefault(size = 50, sort = {"createdAt", "id.messageId"}, direction = Sort.Direction.DESC) Pageable pageable,
-            @Nullable Authentication authentication
+            @PageableDefault(size = 50, sort = {"createdAt", "id.messageId"}, direction = Sort.Direction.DESC) Pageable pageable
     ) throws ApiException {
-        return chatMessageService.getMessages(extractUserId(authentication), chatId, pageable);
+        return chatMessageService.getMessages(chatId, pageable);
     }
 
     @PostMapping("/{chat_id}/messages")
     @ResponseStatus(HttpStatus.CREATED)
     public @NonNull ChatMessageDto sendMessage(
             @PathVariable("chat_id") @Positive long chatId,
-            @Valid @RequestBody SendMessageRequest request,
-            @Nullable Authentication authentication
+            @Valid @RequestBody SendMessageRequest request
     ) throws ApiException {
-        return chatMessageService.sendMessage(extractUserId(authentication), chatId, request);
+        return chatMessageService.sendMessage(chatId, request);
     }
 
     // -------------- /chats/{id}/messages/{id} ------------------------------------------------------------------------
@@ -55,39 +51,35 @@ public class ChatMessageController extends ApiControllerBase {
     @GetMapping("/{chat_id}/messages/{message_id}")
     public @NonNull ChatMessageDto getMessageById(
             @PathVariable("chat_id") @Positive long chatId,
-            @PathVariable("message_id") @Positive long messageId,
-            @Nullable Authentication authentication
+            @PathVariable("message_id") @Positive long messageId
     ) throws ApiException {
-        return chatMessageService.getMessage(extractUserId(authentication), chatId, messageId);
+        return chatMessageService.getMessage(chatId, messageId);
     }
 
     @PatchMapping("/{chat_id}/messages/{message_id}")
     public @NonNull ChatMessageDto editMessageById(
             @PathVariable("chat_id") @Positive long chatId,
             @PathVariable("message_id") @Positive long messageId,
-            @Valid @RequestBody EditMessageRequest request,
-            @Nullable Authentication authentication
+            @Valid @RequestBody EditMessageRequest request
     ) throws ApiException {
-        return chatMessageService.editMessage(extractUserId(authentication), chatId, messageId, request);
+        return chatMessageService.editMessage(chatId, messageId, request);
     }
 
     @PutMapping("/{chat_id}/messages/{message_id}")
     public @NonNull ChatMessageDto replaceMessageById(
             @PathVariable("chat_id") @Positive long chatId,
             @PathVariable("message_id") @Positive long messageId,
-            @Valid @RequestBody EditMessageRequest request,
-            @Nullable Authentication authentication
+            @Valid @RequestBody EditMessageRequest request
     ) throws ApiException {
-        return chatMessageService.editMessage(extractUserId(authentication), chatId, messageId, request);
+        return chatMessageService.editMessage(chatId, messageId, request);
     }
 
     @DeleteMapping("/{chat_id}/messages/{message_id}")
     public @NonNull ChatMessageDto deleteMessage(
             @PathVariable("chat_id") @Positive long chatId,
-            @PathVariable("message_id") @Positive long messageId,
-            @Nullable Authentication authentication
+            @PathVariable("message_id") @Positive long messageId
     ) throws ApiException {
-        return chatMessageService.deleteMessage(extractUserId(authentication), chatId, messageId);
+        return chatMessageService.deleteMessage(chatId, messageId);
     }
 
 }

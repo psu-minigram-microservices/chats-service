@@ -9,7 +9,7 @@ import java.util.UUID;
 @Embeddable
 public record ChatMemberId(
         @Column(name = "chat_id", nullable = false) long chatId,
-        @Column(name = "user_id", nullable = false) UUID userId
+        @Column(name = "user_id", nullable = false) UUID profileId
 ) implements Serializable {
 
 }

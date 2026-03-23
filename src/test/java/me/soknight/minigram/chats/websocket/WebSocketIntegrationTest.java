@@ -39,6 +39,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -71,6 +74,7 @@ class WebSocketIntegrationTest {
 
     @AfterEach
     void tearDown() {
+        SecurityContextHolder.clearContext();
         if (session != null && session.isConnected()) {
             session.disconnect();
         }
@@ -79,10 +83,17 @@ class WebSocketIntegrationTest {
         }
     }
 
+    private void runAs(UUID userId) {
+        SecurityContextHolder.getContext().setAuthentication(
+                new TestingAuthenticationToken(userId.toString(), null)
+        );
+    }
+
     @Test
     void createChat_receivesChatCreatedEvent() throws Exception {
         subscribeToEvents();
 
+        runAs(USER_1);
         var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
 
         var event = pollEvent();
@@ -93,6 +104,7 @@ class WebSocketIntegrationTest {
 
     @Test
     void editChat_receivesChatUpdatedEvent() throws Exception {
+        runAs(USER_1);
         var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Original", List.of(USER_2)));
         subscribeToEvents();
 
@@ -106,6 +118,7 @@ class WebSocketIntegrationTest {
 
     @Test
     void deleteChat_receivesChatDeletedEvent() throws Exception {
+        runAs(USER_1);
         var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
         subscribeToEvents();
 
@@ -119,6 +132,7 @@ class WebSocketIntegrationTest {
 
     @Test
     void sendMessage_receivesMessageSentEvent() throws Exception {
+        runAs(USER_1);
         var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
         subscribeToEvents();
 
@@ -132,6 +146,7 @@ class WebSocketIntegrationTest {
 
     @Test
     void editMessage_receivesMessageEditedEvent() throws Exception {
+        runAs(USER_1);
         var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
         var message = messageService.sendMessage(USER_1, chat.id(), new SendMessageRequest("original"));
         subscribeToEvents();
@@ -145,6 +160,7 @@ class WebSocketIntegrationTest {
 
     @Test
     void deleteMessage_receivesMessageDeletedEvent() throws Exception {
+        runAs(USER_1);
         var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
         var message = messageService.sendMessage(USER_1, chat.id(), new SendMessageRequest("to delete"));
         subscribeToEvents();
@@ -159,6 +175,7 @@ class WebSocketIntegrationTest {
 
     @Test
     void inviteUser_receivesMemberJoinedEvent() throws Exception {
+        runAs(USER_1);
         var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
         subscribeToEvents();
 
@@ -172,9 +189,11 @@ class WebSocketIntegrationTest {
 
     @Test
     void leaveChat_receivesMemberLeftEvent() throws Exception {
+        runAs(USER_1);
         var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2)));
         subscribeToEvents();
 
+        runAs(USER_2);
         chatMemberService.leaveChat(USER_2, chat.id());
 
         var event = pollEvent();
@@ -184,6 +203,7 @@ class WebSocketIntegrationTest {
 
     @Test
     void kickUser_receivesMemberLeftEvent() throws Exception {
+        runAs(USER_1);
         var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.GROUP, "Test", List.of(USER_2, USER_3)));
         subscribeToEvents();
 
@@ -197,6 +217,7 @@ class WebSocketIntegrationTest {
     @Test
     void nonMember_doesNotReceiveEvent() throws Exception {
         // user 1 is connected, but not a member of this chat
+        runAs(USER_2);
         var chat = chatService.createChat(USER_2, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_3)));
         subscribeToEvents();
 

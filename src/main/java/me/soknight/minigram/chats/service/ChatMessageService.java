@@ -40,12 +40,9 @@ public class ChatMessageService {
     private final @NonNull ChatDtoMapper chatDtoMapper;
 
     @Transactional(readOnly = true)
-    public @NonNull Page<ChatMessageDto> getMessages(
-            UUID userId,
-            long chatId,
-            @NonNull Pageable pageable
-    ) throws ApiException {
-        getMember(chatId, userId);
+    public @NonNull Page<ChatMessageDto> getMessages(long chatId, @NonNull Pageable pageable) throws ApiException {
+        var actorProfileId = profileClient.resolveMyProfileId();
+        getMember(chatId, actorProfileId);
         var page = chatMessageRepository.findByChatId(chatId, pageable);
 
         try {
@@ -60,8 +57,9 @@ public class ChatMessageService {
     }
 
     @Transactional(readOnly = true)
-    public @NonNull ChatMessageDto getMessage(UUID userId, long chatId, long messageId) throws ApiException {
-        getMember(chatId, userId);
+    public @NonNull ChatMessageDto getMessage(long chatId, long messageId) throws ApiException {
+        var actorProfileId = profileClient.resolveMyProfileId();
+        getMember(chatId, actorProfileId);
 
         var message = chatMessageRepository.findById(chatId, messageId).orElseThrow(() -> new ApiException(
                 HttpStatus.NOT_FOUND,
@@ -74,13 +72,10 @@ public class ChatMessageService {
     }
 
     @Transactional
-    public @NonNull ChatMessageDto sendMessage(
-            UUID senderId,
-            long chatId,
-            @NonNull SendMessageRequest request
-    ) throws ApiException {
-        var sender = getMember(chatId, senderId);
-        validateMessageSending(senderId, sender.getChat());
+    public @NonNull ChatMessageDto sendMessage(long chatId, @NonNull SendMessageRequest request) throws ApiException {
+        var senderProfileId = profileClient.resolveMyProfileId();
+        var sender = getMember(chatId, senderProfileId);
+        validateMessageSending(senderProfileId, sender.getChat());
 
         chatRepository.incrementMessageSequence(chatId);
         long messageId = chatRepository.getMessageSequence(chatId);
@@ -95,13 +90,9 @@ public class ChatMessageService {
     }
 
     @Transactional
-    public @NonNull ChatMessageDto editMessage(
-            UUID actorUserId,
-            long chatId,
-            long messageId,
-            @NonNull EditMessageRequest request
-    ) throws ApiException {
-        var message = getEditableMessage(chatId, messageId, actorUserId);
+    public @NonNull ChatMessageDto editMessage(long chatId, long messageId, @NonNull EditMessageRequest request) throws ApiException {
+        var actorProfileId = profileClient.resolveMyProfileId();
+        var message = getEditableMessage(chatId, messageId, actorProfileId);
         message.updateContent(request.content().trim());
 
         var updatedMessage = chatMessageRepository.save(message);
@@ -111,8 +102,9 @@ public class ChatMessageService {
     }
 
     @Transactional
-    public @NonNull ChatMessageDto deleteMessage(UUID actorUserId, long chatId, long messageId) throws ApiException {
-        var message = getEditableMessage(chatId, messageId, actorUserId);
+    public @NonNull ChatMessageDto deleteMessage(long chatId, long messageId) throws ApiException {
+        var actorProfileId = profileClient.resolveMyProfileId();
+        var message = getEditableMessage(chatId, messageId, actorProfileId);
 
         var dto = chatDtoMapper.toChatMessageDto(message);
         chatMessageRepository.delete(message);
@@ -124,12 +116,12 @@ public class ChatMessageService {
         return dto;
     }
 
-    private void validateMessageSending(UUID senderId, @NonNull ChatEntity chat) throws ApiException {
+    private void validateMessageSending(UUID senderProfileId, @NonNull ChatEntity chat) throws ApiException {
         if (!chat.isDirect()) return;
 
         var receiverId = chat.getMembers().stream()
                 .map(ChatMemberEntity::getUserId)
-                .filter(userId -> !userId.equals(senderId))
+                .filter(userId -> !userId.equals(senderProfileId))
                 .findFirst()
                 .orElseThrow(() -> new ApiException(
                         HttpStatus.CONFLICT,
@@ -151,8 +143,8 @@ public class ChatMessageService {
         );
     }
 
-    private @NonNull ChatMemberEntity getMember(long chatId, UUID userId) throws ApiException {
-        return chatMemberRepository.findById(chatId, userId).orElseThrow(() -> new ApiException(
+    private @NonNull ChatMemberEntity getMember(long chatId, UUID profileId) throws ApiException {
+        return chatMemberRepository.findById(chatId, profileId).orElseThrow(() -> new ApiException(
                 HttpStatus.NOT_FOUND,
                 "chat_not_found",
                 "Chat {0} not found",
@@ -160,8 +152,8 @@ public class ChatMessageService {
         ));
     }
 
-    private @NonNull ChatMessageEntity getEditableMessage(long chatId, long messageId, UUID actorUserId) throws ApiException {
-        getMember(chatId, actorUserId);
+    private @NonNull ChatMessageEntity getEditableMessage(long chatId, long messageId, UUID actorProfileId) throws ApiException {
+        getMember(chatId, actorProfileId);
 
         var message = chatMessageRepository.findById(chatId, messageId).orElseThrow(() -> new ApiException(
                 HttpStatus.NOT_FOUND,
@@ -170,7 +162,7 @@ public class ChatMessageService {
                 messageId
         ));
 
-        if (!message.getSenderId().equals(actorUserId))
+        if (!message.getSenderId().equals(actorProfileId))
             throw new ApiException(
                     HttpStatus.FORBIDDEN,
                     "access_denied",

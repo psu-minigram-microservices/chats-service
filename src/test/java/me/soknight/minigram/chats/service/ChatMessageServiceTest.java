@@ -9,12 +9,15 @@ import me.soknight.minigram.chats.model.request.EditMessageRequest;
 import me.soknight.minigram.chats.model.request.SendMessageRequest;
 import me.soknight.minigram.chats.service.client.TestProfileClient;
 import me.soknight.minigram.chats.service.client.model.attribute.RelationStatus;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -41,12 +44,24 @@ class ChatMessageServiceTest {
         profileClient.reset();
     }
 
+    @AfterEach
+    void clearAuth() {
+        SecurityContextHolder.clearContext();
+    }
+
+    private void runAs(UUID userId) {
+        SecurityContextHolder.getContext().setAuthentication(
+                new TestingAuthenticationToken(userId.toString(), null)
+        );
+    }
+
     private void flushAndClear() {
         em.flush();
         em.clear();
     }
 
     private ChatDto createDirectChat() throws ApiException {
+        runAs(USER_1);
         var chat = chatService.createChat(USER_1, new CreateChatRequest(ChatType.DIRECT, null, List.of(USER_2)));
         flushAndClear();
         return chat;
@@ -88,6 +103,7 @@ class ChatMessageServiceTest {
     void sendMessage_notMember_throws() throws ApiException {
         var chat = createDirectChat();
 
+        runAs(UNKNOWN_USER);
         assertThatThrownBy(() -> messageService.sendMessage(UNKNOWN_USER, chat.id(), new SendMessageRequest("Hello!")))
                 .isInstanceOf(ApiException.class);
     }
@@ -130,6 +146,7 @@ class ChatMessageServiceTest {
         var message = messageService.sendMessage(USER_1, chat.id(), new SendMessageRequest("original"));
         flushAndClear();
 
+        runAs(USER_2);
         assertThatThrownBy(() -> messageService.editMessage(USER_2, chat.id(), message.id(), new EditMessageRequest("updated")))
                 .isInstanceOf(ApiException.class);
     }
@@ -191,6 +208,7 @@ class ChatMessageServiceTest {
         var message = messageService.sendMessage(USER_1, chat.id(), new SendMessageRequest("original"));
         flushAndClear();
 
+        runAs(USER_2);
         assertThatThrownBy(() -> messageService.deleteMessage(USER_2, chat.id(), message.id()))
                 .isInstanceOf(ApiException.class);
     }

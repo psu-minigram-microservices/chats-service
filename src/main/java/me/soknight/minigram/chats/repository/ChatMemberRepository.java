@@ -14,7 +14,7 @@ import java.util.UUID;
 public interface ChatMemberRepository extends JpaRepository<ChatMemberEntity, ChatMemberId> {
 
     @Query("""
-            select chat_member.id.userId
+            select chat_member.id.profileId
             from ChatMemberEntity chat_member
             where chat_member.chat.id = :chatId
             """)
@@ -30,14 +30,14 @@ public interface ChatMemberRepository extends JpaRepository<ChatMemberEntity, Ch
     @Query("""
             select chat_member
             from ChatMemberEntity chat_member
-            where chat_member.chat.id = :chatId and chat_member.id.userId = :userId
+            where chat_member.chat.id = :chatId and chat_member.id.profileId = :userId
             """)
     Optional<ChatMemberEntity> findById(long chatId, UUID userId);
 
     @Query("""
             select count(chat_member) > 0
             from ChatMemberEntity chat_member
-            where chat_member.chat.id = :chatId and chat_member.id.userId = :userId
+            where chat_member.chat.id = :chatId and chat_member.id.profileId = :userId
             """)
     boolean existsById(long chatId, UUID userId);
 

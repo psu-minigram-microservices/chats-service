@@ -31,9 +31,9 @@ public class ChatMemberEntity {
     @Column(name = "joined_at", nullable = false, updatable = false)
     private @NonNull Instant joinedAt;
 
-    public ChatMemberEntity(@NonNull ChatEntity chat, UUID userId, @Nullable ChatMemberRole role) {
+    public ChatMemberEntity(@NonNull ChatEntity chat, UUID profileId, @Nullable ChatMemberRole role) {
         this.chat = Objects.requireNonNull(chat, "chat");
-        this.id = new ChatMemberId(chat.getId(), userId);
+        this.id = new ChatMemberId(chat.getId(), profileId);
         this.role = role != null ? role : ChatMemberRole.MEMBER;
         this.joinedAt = Instant.now();
     }
@@ -43,7 +43,7 @@ public class ChatMemberEntity {
     }
 
     public UUID getUserId() {
-        return id.userId();
+        return id.profileId();
     }
 
 }

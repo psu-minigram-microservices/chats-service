@@ -20,13 +20,13 @@ public interface ChatRepository extends JpaRepository<ChatEntity, Long> {
             select distinct chat
             from ChatEntity chat
             join chat.members membership
-            where membership.id.userId = :userId
+            where membership.id.profileId = :userId
             """,
             countQuery = """
             select count(distinct chat.id)
             from ChatEntity chat
             join chat.members membership
-            where membership.id.userId = :userId
+            where membership.id.profileId = :userId
             """)
     Page<ChatEntity> findAllByMemberUserId(UUID userId, Pageable pageable);
 
@@ -35,7 +35,7 @@ public interface ChatRepository extends JpaRepository<ChatEntity, Long> {
             select distinct chat
             from ChatEntity chat
             join chat.members membership
-            where chat.id = :chatId and membership.id.userId = :userId
+            where chat.id = :chatId and membership.id.profileId = :userId
             """)
     Optional<ChatEntity> findAccessibleById(long chatId, UUID userId);
 
