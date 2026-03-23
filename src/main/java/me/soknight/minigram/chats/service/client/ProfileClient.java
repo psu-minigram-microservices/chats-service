@@ -119,6 +119,31 @@ public class ProfileClient {
         return getMyProfile().userId();
     }
 
+    public @NonNull UUID resolveProfileId(@NonNull String bearerToken) throws ApiException {
+        try {
+            var profile = profileServiceRestClient.get()
+                    .uri("/api/v1/profiles/me")
+                    .header("Authorization", "Bearer " + bearerToken)
+                    .retrieve()
+                    .body(ProfileDto.class);
+
+            if (profile == null)
+                throw new ApiException(
+                        HttpStatus.BAD_GATEWAY,
+                        "profile_service_invalid_response",
+                        "Profile service returned empty profile response for token"
+                );
+
+            return profile.userId();
+        } catch (RestClientException ex) {
+            throw new ApiException(
+                    HttpStatus.BAD_GATEWAY,
+                    "profile_service_unavailable",
+                    "Failed to resolve profile ID from token"
+            ).withPayload(ex.getMessage());
+        }
+    }
+
     public @NonNull ProfileDto getProfile(UUID id) throws ApiException {
         try {
             var profile = profileServiceRestClient.get()
