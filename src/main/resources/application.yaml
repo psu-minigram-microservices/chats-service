@@ -7,7 +7,7 @@ ktor:
 
 chats:
   jwt:
-    secret: "$JWT_SECRET"
+    secret: "${JWT_SECRET}"
     issuer: "${JWT_ISSUER:Minigram}"
     audience: "${JWT_AUDIENCE:MinigramClient}"
   services:
