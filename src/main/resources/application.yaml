@@ -1,59 +1,21 @@
-spring:
+ktor:
   application:
-    name: minigram-chats
+    modules:
+      - me.soknight.minigram.chats.ApplicationKt.module
+  deployment:
+    port: 8080
 
-  datasource:
-    url: jdbc:h2:file:./data/chats
-
-  flyway:
-    enabled: true
-
-  jackson:
-    locale: en_US
-
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    open-in-view: true
-    properties:
-      hibernate:
-        jdbc:
-          time_zone: UTC
-
-  servlet:
-    multipart:
-      max-file-size: 5MB
-      max-request-size: 5MB
-
-server:
-  port: ${SERVER_PORT:8080}
-
+chats:
   jwt:
-    secret: ${JWT_SECRET}
-    issuer: ${JWT_ISSUER:Minigram}
-    audience: ${JWT_AUDIENCE:MinigramClient}
-
+    secret: "$JWT_SECRET"
+    issuer: "${JWT_ISSUER:Minigram}"
+    audience: "${JWT_AUDIENCE:MinigramClient}"
   services:
-    profile: ${PROFILE_SERVICE_URL:http://profile-service:5000}
-
-logging:
-  level:
-    root: INFO
-    '[me.soknight.minigram.chats]': DEBUG
-    '[org.hibernate.orm.connections.pooling]': WARN
-    '[org.springframework.security]': DEBUG
-    '[org.springframework.web]': DEBUG
-  pattern:
-    console: '%clr([){faint}%clr(%d{HH:mm:ss}){magenta}%clr(]){faint} %clr(%5p) %clr(:){faint} %clr(%-40.40logger{0}){cyan} %clr(:){faint} %m%n%wEx'
-
-springdoc:
-  api-docs:
-    enabled: true
-    path: /docs/openapi
-    version: openapi_3_1
-  default-produces-media-type: application/json
-  enable-spring-security: true
-  swagger-ui:
-    enabled: true
-    operations-sorter: alpha
-    use-root-path: on
+    profileUrl: "${PROFILE_SERVICE_URL:http://profile-service:5000}"
+  database:
+    url: "${DATABASE_URL:jdbc:h2:file:./data/chats;MODE=PostgreSQL}"
+    driver: "${DATABASE_DRIVER:org.h2.Driver}"
+    username: "${DATABASE_USERNAME:}"
+    password: "${DATABASE_PASSWORD:}"
+    maxPoolSize: "${DATABASE_MAX_POOL_SIZE:10}"
+    minIdle: "${DATABASE_MIN_IDLE:2}"
