@@ -5,34 +5,34 @@ import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import me.soknight.minigram.chats.client.ProfileClient
+import me.soknight.minigram.chats.client.ProfileClientFactory
 import me.soknight.minigram.chats.dto.request.EditMessageRequest
 import me.soknight.minigram.chats.dto.request.SendMessageRequest
 import me.soknight.minigram.chats.exception.ValidationException
 import me.soknight.minigram.chats.plugin.currentUserId
 import me.soknight.minigram.chats.service.ChatMessageService
 
-fun Route.chatMessageRoutes(messageService: ChatMessageService, clientFactory: (String) -> ProfileClient) {
+fun Route.chatMessageRoutes(messageService: ChatMessageService, profileClientFactory: ProfileClientFactory) {
     authenticate("jwt") {
         route("/api/v1/chats/{chat_id}/messages") {
             get {
                 val page = call.queryInt("page", 0)
                 val size = call.queryInt("size", 20)
-                call.respond(messageService.getMessages(call.chatId(), call.currentUserId(), clientFactory(call.bearerToken()), page, size))
+                call.respond(messageService.getMessages(call.chatId(), call.currentUserId(), profileClientFactory.create(call.bearerToken()), page, size))
             }
             post {
-                val dto = messageService.sendMessage(call.chatId(), call.receive<SendMessageRequest>(), call.currentUserId(), clientFactory(call.bearerToken()))
+                val dto = messageService.sendMessage(call.chatId(), call.receive<SendMessageRequest>(), call.currentUserId(), profileClientFactory.create(call.bearerToken()))
                 call.respond(HttpStatusCode.Created, dto)
             }
             route("/{message_id}") {
                 get {
-                    call.respond(messageService.getMessage(call.chatId(), call.messageId(), call.currentUserId(), clientFactory(call.bearerToken())))
+                    call.respond(messageService.getMessage(call.chatId(), call.messageId(), call.currentUserId(), profileClientFactory.create(call.bearerToken())))
                 }
                 patch {
-                    call.respond(messageService.editMessage(call.chatId(), call.messageId(), call.receive<EditMessageRequest>(), call.currentUserId(), clientFactory(call.bearerToken())))
+                    call.respond(messageService.editMessage(call.chatId(), call.messageId(), call.receive<EditMessageRequest>(), call.currentUserId(), profileClientFactory.create(call.bearerToken())))
                 }
                 put {
-                    call.respond(messageService.editMessage(call.chatId(), call.messageId(), call.receive<EditMessageRequest>(), call.currentUserId(), clientFactory(call.bearerToken())))
+                    call.respond(messageService.editMessage(call.chatId(), call.messageId(), call.receive<EditMessageRequest>(), call.currentUserId(), profileClientFactory.create(call.bearerToken())))
                 }
                 delete {
                     messageService.deleteMessage(call.chatId(), call.messageId(), call.currentUserId())

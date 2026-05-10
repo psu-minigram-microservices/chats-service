@@ -15,7 +15,8 @@ fun main(args: Array<String>) {
 
 fun Application.module(vararg extraModules: Module = emptyArray()) {
     install(Koin) {
-        modules(AppModule().module(), *extraModules)
+        if (extraModules.isNotEmpty()) allowOverride(true)
+        modules(AppModule(this@module).module(), *extraModules)
     }
 
     configureDatabase(get())

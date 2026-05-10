@@ -76,6 +76,11 @@ dependencies {
     testImplementation(libs.mockk)
 }
 
+koinCompiler {
+    compileSafety = false
+    userLogs = true
+}
+
 tasks.test {
     jvmArgs("-Dnet.bytebuddy.experimental=true")
     useJUnitPlatform()
