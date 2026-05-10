@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.koin.compiler)
     application
 }
 
@@ -42,6 +43,11 @@ dependencies {
     // Ktor Client
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.content.negotiation)
+
+    // Koin
+    implementation(libs.koin.core)
+    implementation(libs.koin.ktor)
+    implementation(libs.koin.annotations)
 
     // Exposed
     implementation(libs.exposed.dao)
