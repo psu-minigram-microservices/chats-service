@@ -1,16 +1,72 @@
 <configuration>
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+
+    <!-- APP APPENDERS -->
+
+    <appender name="app-console" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>[%date{HH:mm:ss}] %highlight([%.-1level]) %msg%n</pattern>
         </encoder>
     </appender>
 
-    <root level="INFO">
-        <appender-ref ref="STDOUT" />
-    </root>
+    <appender name="app-logs" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${logs_dir:-logs}/chats.log</file>
 
-    <logger name="io.ktor" level="INFO" />
-    <logger name="org.flywaydb" level="INFO" />
-    <logger name="com.zaxxer.hikari" level="WARN" />
-    <logger name="org.jetbrains.exposed" level="WARN" />
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>${logs_dir:-logs}/chats.%i.log.gz</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>5</maxIndex>
+        </rollingPolicy>
+
+        <triggeringPolicy class="me.soknight.minigram.chats.logging.RollOncePerSessionTriggeringPolicy"/>
+
+        <encoder>
+            <pattern>[%date{dd.MM.yyyy : HH:mm:ss.SSS}] [%-5level] [%logger{0}] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- LIBRARY APPENDERS -->
+
+    <appender name="lib-console" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>WARN</level>
+        </filter>
+
+        <encoder>
+            <pattern>[%date{HH:mm:ss}] %highlight([%.-1level]) %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- LIBRARY LOGGING -->
+
+    <logger name="com.zaxxer.hikari" level="WARN" additivity="false">
+        <appender-ref ref="app-logs"/>
+        <appender-ref ref="lib-console"/>
+    </logger>
+
+    <logger name="io.ktor" level="INFO" additivity="false">
+        <appender-ref ref="app-logs"/>
+        <appender-ref ref="lib-console"/>
+    </logger>
+
+    <logger name="org.flywaydb" level="INFO" additivity="false">
+        <appender-ref ref="app-logs"/>
+        <appender-ref ref="lib-console"/>
+    </logger>
+
+    <logger name="org.jetbrains.exposed" level="WARN" additivity="false">
+        <appender-ref ref="app-logs"/>
+        <appender-ref ref="lib-console"/>
+    </logger>
+
+    <!-- APP LOGGING -->
+
+    <root level="DEBUG">
+        <appender-ref ref="app-console"/>
+        <appender-ref ref="app-logs"/>
+    </root>
 </configuration>
