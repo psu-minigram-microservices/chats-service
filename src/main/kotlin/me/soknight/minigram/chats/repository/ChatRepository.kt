@@ -13,7 +13,9 @@ import org.jetbrains.exposed.v1.jdbc.update
 import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import org.koin.core.annotation.Single
 
+@Single
 class ChatRepository {
 
     suspend fun findAllByMemberId(userId: Uuid, page: Int, size: Int): List<ChatRow> = dbQuery {

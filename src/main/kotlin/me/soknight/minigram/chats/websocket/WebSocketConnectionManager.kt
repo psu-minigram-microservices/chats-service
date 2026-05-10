@@ -9,7 +9,9 @@ import me.soknight.minigram.chats.plugin.appJson
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import org.koin.core.annotation.Single
 
+@Single
 class WebSocketConnectionManager {
     private val sessions = ConcurrentHashMap<Uuid, MutableSet<DefaultWebSocketSession>>()
 

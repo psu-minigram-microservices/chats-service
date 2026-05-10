@@ -18,7 +18,9 @@ import me.soknight.minigram.chats.repository.ChatMemberRepository
 import me.soknight.minigram.chats.repository.ChatRepository
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import org.koin.core.annotation.Single
 
+@Single
 class ChatService(
     private val chatRepository: ChatRepository,
     private val memberRepository: ChatMemberRepository,
