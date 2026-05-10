@@ -15,6 +15,9 @@ kotlin {
     jvmToolchain {
         languageVersion = JavaLanguageVersion.of(25)
     }
+    compilerOptions {
+        freeCompilerArgs.add("-opt-in=kotlin.uuid.ExperimentalUuidApi")
+    }
 }
 
 repositories {

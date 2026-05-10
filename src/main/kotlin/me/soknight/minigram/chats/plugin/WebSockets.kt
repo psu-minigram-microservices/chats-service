@@ -1,0 +1,34 @@
+package me.soknight.minigram.chats.plugin
+
+import io.ktor.server.application.*
+import io.ktor.server.routing.*
+import io.ktor.server.websocket.*
+import io.ktor.websocket.*
+import me.soknight.minigram.chats.auth.JwtTokenProvider
+import me.soknight.minigram.chats.websocket.WebSocketConnectionManager
+import kotlin.time.Duration.Companion.seconds
+
+fun Application.configureWebSockets(
+    jwtTokenProvider: JwtTokenProvider,
+    connectionManager: WebSocketConnectionManager
+) {
+    install(WebSockets) {
+        pingPeriod = 30.seconds
+        timeout    = 60.seconds
+    }
+    routing {
+        webSocket("/ws") {
+            val token = call.request.queryParameters["token"]
+                ?: return@webSocket close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "token required"))
+            val userId = jwtTokenProvider.validateAndGetUserId(token)
+                ?: return@webSocket close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "invalid token"))
+
+            connectionManager.register(userId, this)
+            try {
+                for (frame in incoming) { /* client-to-server frames ignored */ }
+            } finally {
+                connectionManager.unregister(userId, this)
+            }
+        }
+    }
+}
