@@ -7,7 +7,9 @@ import me.soknight.minigram.chats.repository.ChatMemberRepository
 import me.soknight.minigram.chats.websocket.WebSocketConnectionManager
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+import org.koin.core.annotation.Single
 
+@Single
 class ChatEventPublisher(
     private val connectionManager: WebSocketConnectionManager,
     private val memberRepository: ChatMemberRepository
