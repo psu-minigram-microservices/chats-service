@@ -8,15 +8,16 @@ group = "me.soknight.minigram"
 version = "1.0"
 
 application {
-    mainClass.set("io.ktor.server.cio.EngineMain")
+    mainClass.set("me.soknight.minigram.chats.ApplicationKt")
 }
 
 kotlin {
-    jvmToolchain {
-        languageVersion = JavaLanguageVersion.of(25)
-    }
     compilerOptions {
         freeCompilerArgs.add("-opt-in=kotlin.uuid.ExperimentalUuidApi")
+    }
+
+    jvmToolchain {
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
@@ -28,7 +29,6 @@ dependencies {
     // Ktor Server
     implementation(libs.ktor.server.cio)
     implementation(libs.ktor.server.core)
-    implementation(libs.ktor.server.config.yaml)
     implementation(libs.ktor.server.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.ktor.server.auth)
@@ -65,8 +65,6 @@ dependencies {
     // Testing
     testImplementation(kotlin("test"))
     testImplementation(libs.ktor.server.test.host)
-    testImplementation(libs.ktor.client.content.negotiation)
-    testImplementation(libs.h2)
     testImplementation(libs.mockk)
 }
 

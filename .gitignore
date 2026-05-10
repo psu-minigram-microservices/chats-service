@@ -3,6 +3,7 @@
 .gradle/
 build/
 /data/
+/logs/
 out/
 *.jar
 *.iml
