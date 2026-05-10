@@ -10,6 +10,7 @@ import me.soknight.minigram.chats.plugin.appJson
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Single
+import org.koin.core.module.Module as KoinModule
 
 @Module
 @ComponentScan("me.soknight.minigram.chats")
@@ -25,3 +26,5 @@ class AppModule(private val application: Application) {
         expectSuccess = true
     }
 }
+
+fun AppModule.buildKoinModule(): KoinModule = module()
