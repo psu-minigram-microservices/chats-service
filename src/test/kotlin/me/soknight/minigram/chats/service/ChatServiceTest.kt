@@ -5,6 +5,7 @@ package me.soknight.minigram.chats.service
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import me.soknight.minigram.chats.domain.ChatRow
+import me.soknight.minigram.chats.dto.ChatDto
 import me.soknight.minigram.chats.dto.request.CreateChatRequest
 import me.soknight.minigram.chats.exception.InvalidChatMembersException
 import me.soknight.minigram.chats.exception.InvalidChatTitleException
@@ -33,7 +34,7 @@ class ChatServiceTest {
         coEvery { chatRepo.insert(ChatType.SAVED, null, userId) } returns chatRow(ChatType.SAVED)
         coEvery { memberRepo.insert(1L, userId, ChatMemberRole.OWNER) } returns mockk()
         coEvery { memberRepo.findByChatId(1L, 0, 200) } returns emptyList()
-        coEvery { mapper.toChatDto(any(), any()) } returns mockk(relaxed = true)
+        coEvery { mapper.toChatDto(any(), any()) } returns ChatDto(1L, ChatType.SAVED, null, userId, emptyList(), null, Clock.System.now(), Clock.System.now())
         service.createChat(CreateChatRequest(ChatType.SAVED), userId, client)
         coVerify { chatRepo.insert(ChatType.SAVED, null, userId) }
     }
