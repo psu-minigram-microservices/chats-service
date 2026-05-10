@@ -4,15 +4,8 @@ import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.application.*
-import me.soknight.minigram.chats.config.*
 import me.soknight.minigram.chats.plugin.appJson
 import org.koin.core.annotation.Single
-
-@Single fun provideAppConfig(application: Application): AppConfig = application.loadConfig()
-@Single fun provideJwtConfig(config: AppConfig): JwtConfig = config.jwt
-@Single fun provideDatabaseConfig(config: AppConfig): DatabaseConfig = config.database
-@Single fun provideServicesConfig(config: AppConfig): ServicesConfig = config.services
 
 @Single
 fun provideHttpClient(): HttpClient = HttpClient(CIO) {
