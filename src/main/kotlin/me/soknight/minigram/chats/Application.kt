@@ -3,9 +3,9 @@ package me.soknight.minigram.chats
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import me.soknight.minigram.chats.di.AppModule
+import me.soknight.minigram.chats.di.module
 import me.soknight.minigram.chats.plugin.*
 import org.koin.core.module.Module
-import org.koin.dsl.module
 import org.koin.ktor.ext.get
 import org.koin.ktor.plugin.Koin
 
@@ -14,12 +14,8 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module(vararg extraModules: Module = emptyArray()) {
-    val app = this
     install(Koin) {
-        modules(
-            module { single { AppModule(app) } },
-            *extraModules
-        )
+        modules(AppModule().module(), *extraModules)
     }
 
     configureDatabase(get())
