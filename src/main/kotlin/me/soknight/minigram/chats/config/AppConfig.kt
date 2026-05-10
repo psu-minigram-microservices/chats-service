@@ -15,6 +15,7 @@ data class DatabaseConfig(
     val password: String,
     val maxPoolSize: Int,
     val minIdle: Int,
+    val migrationLocations: List<String> = listOf("classpath:db/migration"),
 )
 
 data class JwtConfig(
@@ -44,7 +45,9 @@ fun Application.loadConfig(): AppConfig {
             username   = config.property("chats.database.username").getString(),
             password   = config.property("chats.database.password").getString(),
             maxPoolSize = config.property("chats.database.maxPoolSize").getString().toInt(),
-            minIdle    = config.property("chats.database.minIdle").getString().toInt()
+            minIdle    = config.property("chats.database.minIdle").getString().toInt(),
+            migrationLocations = config.propertyOrNull("chats.database.migrationLocations")
+                ?.getList() ?: listOf("classpath:db/migration")
         )
     )
 }

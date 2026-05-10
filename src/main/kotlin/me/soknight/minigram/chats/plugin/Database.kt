@@ -23,8 +23,7 @@ fun Application.configureDatabase(config: DatabaseConfig) {
 
     Flyway.configure()
         .dataSource(ds)
-        .locations("classpath:db/migration")
-        .schemas("public")
+        .locations(*config.migrationLocations.toTypedArray())
         .load()
         .migrate()
 

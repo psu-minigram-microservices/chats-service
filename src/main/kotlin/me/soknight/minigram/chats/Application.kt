@@ -20,18 +20,13 @@ fun main(args: Array<String>) {
     EngineMain.main(args)
 }
 
-fun Application.module() {
+fun Application.module(clientFactory: ((String) -> ProfileClient)? = null) {
     val config = loadConfig()
 
     configureDatabase(config.database)
     configureSerialization()
     configureSecurity(config.jwt)
     configureStatusPages()
-
-    val httpClient = HttpClient(CIO) {
-        install(ContentNegotiation) { json(appJson) }
-        expectSuccess = true
-    }
 
     val jwtProvider       = JwtTokenProvider(config.jwt)
     val connectionManager = WebSocketConnectionManager()
@@ -47,10 +42,17 @@ fun Application.module() {
     val memberService  = ChatMemberService(chatRepo, memberRepo, dtoMapper, eventPublisher)
     val messageService = ChatMessageService(chatRepo, memberRepo, messageRepo, dtoMapper, eventPublisher)
 
-    val clientFactory: (String) -> ProfileClient = { token ->
-        ProfileClient(httpClient, config.services.profileUrl, token)
+    val resolvedClientFactory: (String) -> ProfileClient = clientFactory ?: run {
+        val httpClient = HttpClient(CIO) {
+            install(ContentNegotiation) { json(appJson) }
+            expectSuccess = true
+        }
+        val factory: (String) -> ProfileClient = { token ->
+            ProfileClient(httpClient, config.services.profileUrl, token)
+        }
+        factory
     }
 
-    configureRouting(chatService, memberService, messageService, clientFactory)
+    configureRouting(chatService, memberService, messageService, resolvedClientFactory)
     configureWebSockets(jwtProvider, connectionManager)
 }

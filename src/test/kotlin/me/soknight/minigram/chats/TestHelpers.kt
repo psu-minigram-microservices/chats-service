@@ -30,12 +30,12 @@ fun mockProfileClient(
     selfId: Uuid = Uuid.random(),
     friendStatus: RelationStatus = RelationStatus.FRIEND
 ): ProfileClient = mockk {
-    coEvery { resolveMyProfileId() } returns selfId
     coEvery { getMyProfile() } returns ProfileDto(selfId, "Test User")
     coEvery { getProfile(any()) } answers {
         val id = firstArg<Uuid>()
         ProfileDto(id, "User ${id.toString().take(4)}")
     }
+    coEvery { resolveMyProfileId() } returns selfId
     coEvery { getRelation(any(), any()) } returns ProfileRelationDto(friendStatus, ProfileDto(selfId, "User"))
     coEvery { getFriends(any(), any()) } returns ProfilePageDto(0, emptyList())
 }
