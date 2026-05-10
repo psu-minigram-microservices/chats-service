@@ -10,10 +10,11 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.config.*
 import io.ktor.server.testing.*
 import me.soknight.minigram.chats.dto.ChatDto
-import me.soknight.minigram.chats.mockProfileClient
+import me.soknight.minigram.chats.mockProfileClientFactory
 import me.soknight.minigram.chats.module
 import me.soknight.minigram.chats.plugin.appJson
 import me.soknight.minigram.chats.testToken
+import org.koin.dsl.module
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlin.test.*
@@ -22,8 +23,13 @@ class ChatRoutesTest {
     private val userId = Uuid.random()
 
     private fun test(block: suspend ApplicationTestBuilder.() -> Unit) = testApplication {
+        val mockFactory = mockProfileClientFactory(userId)
         environment { config = ApplicationConfig("application.conf") }
-        application { module(clientFactory = { mockProfileClient(userId) }) }
+        application {
+            module(module {
+                single { mockFactory }
+            })
+        }
         block()
     }
 

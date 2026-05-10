@@ -4,7 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import me.soknight.minigram.chats.client.ProfileClient
+import me.soknight.minigram.chats.client.ProfileClientFactory
 import me.soknight.minigram.chats.routing.chatMemberRoutes
 import me.soknight.minigram.chats.routing.chatMessageRoutes
 import me.soknight.minigram.chats.routing.chatRoutes
@@ -16,13 +16,13 @@ fun Application.configureRouting(
     chatService: ChatService,
     memberService: ChatMemberService,
     messageService: ChatMessageService,
-    clientFactory: (String) -> ProfileClient
+    profileClientFactory: ProfileClientFactory
 ) {
     routing {
         get("/health") { call.respond(HttpStatusCode.OK, mapOf("status" to "ok")) }
 
-        chatRoutes(chatService, clientFactory)
-        chatMemberRoutes(memberService, clientFactory)
-        chatMessageRoutes(messageService, clientFactory)
+        chatRoutes(chatService, profileClientFactory)
+        chatMemberRoutes(memberService, profileClientFactory)
+        chatMessageRoutes(messageService, profileClientFactory)
     }
 }

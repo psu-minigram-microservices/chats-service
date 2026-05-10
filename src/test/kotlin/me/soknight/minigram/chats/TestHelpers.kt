@@ -5,8 +5,10 @@ package me.soknight.minigram.chats
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import me.soknight.minigram.chats.client.ProfileClient
+import me.soknight.minigram.chats.client.ProfileClientFactory
 import me.soknight.minigram.chats.dto.ProfileDto
 import me.soknight.minigram.chats.dto.ProfilePageDto
 import me.soknight.minigram.chats.dto.ProfileRelationDto
@@ -38,4 +40,11 @@ fun mockProfileClient(
     coEvery { resolveMyProfileId() } returns selfId
     coEvery { getRelation(any(), any()) } returns ProfileRelationDto(friendStatus, ProfileDto(selfId, "User"))
     coEvery { getFriends(any(), any()) } returns ProfilePageDto(0, emptyList())
+}
+
+fun mockProfileClientFactory(
+    selfId: Uuid = Uuid.random(),
+    friendStatus: RelationStatus = RelationStatus.FRIEND
+): ProfileClientFactory = mockk {
+    every { create(any()) } returns mockProfileClient(selfId, friendStatus)
 }
