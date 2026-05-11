@@ -89,7 +89,17 @@ dependencies {
     testImplementation(libs.mockk)
 }
 
-tasks.test {
-    jvmArgs("-Dnet.bytebuddy.experimental=true")
-    useJUnitPlatform()
+tasks {
+    shadowJar {
+        mergeServiceFiles()
+
+        filesMatching("META-INF/services/**") {
+            duplicatesStrategy = DuplicatesStrategy.INCLUDE
+        }
+    }
+
+    test {
+        jvmArgs("-Dnet.bytebuddy.experimental=true")
+        useJUnitPlatform()
+    }
 }
