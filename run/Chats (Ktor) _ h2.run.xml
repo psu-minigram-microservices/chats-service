@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Chats (Ktor) / h2" type="KtorApplicationConfigurationType" factoryName="Ktor">
     <option name="envFilePaths">
-      <option value="$PROJECT_DIR$/.env" />
+      <option value="$PROJECT_DIR$/run/.env" />
     </option>
     <option name="MAIN_CLASS_NAME" value="me.soknight.minigram.chats.ApplicationKt" />
     <module name="chats-service.main" />
