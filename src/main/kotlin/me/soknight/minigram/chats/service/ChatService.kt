@@ -5,6 +5,7 @@ package me.soknight.minigram.chats.service
 import kotlinx.serialization.encodeToString
 import me.soknight.minigram.chats.client.ProfileClient
 import me.soknight.minigram.chats.dto.ChatDto
+import me.soknight.minigram.chats.dto.PageDto
 import me.soknight.minigram.chats.dto.request.CreateChatRequest
 import me.soknight.minigram.chats.dto.request.EditChatRequest
 import me.soknight.minigram.chats.events.ChatEvent
@@ -27,8 +28,11 @@ class ChatService(
     private val dtoMapper: ChatDtoMapper,
     private val eventPublisher: ChatEventPublisher
 ) {
-    suspend fun getChats(userId: Uuid, profileClient: ProfileClient, page: Int, size: Int): List<ChatDto> =
-        chatRepository.findAllByMemberId(userId, page, size).map { dtoMapper.toChatDto(it, profileClient) }
+    suspend fun getChats(userId: Uuid, profileClient: ProfileClient, page: Int, size: Int): PageDto<ChatDto> {
+        val content = chatRepository.findAllByMemberId(userId, page, size).map { dtoMapper.toChatDto(it, profileClient) }
+        val total   = chatRepository.countByMemberId(userId)
+        return PageDto(content, page, size, total)
+    }
 
     suspend fun getChat(chatId: Long, userId: Uuid, profileClient: ProfileClient): ChatDto {
         val chat = chatRepository.findAccessibleById(chatId, userId) ?: throw ChatNotFoundException(chatId)

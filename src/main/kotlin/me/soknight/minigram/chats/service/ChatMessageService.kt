@@ -4,6 +4,7 @@ package me.soknight.minigram.chats.service
 
 import me.soknight.minigram.chats.client.ProfileClient
 import me.soknight.minigram.chats.dto.ChatMessageDto
+import me.soknight.minigram.chats.dto.PageDto
 import me.soknight.minigram.chats.dto.request.EditMessageRequest
 import me.soknight.minigram.chats.dto.request.SendMessageRequest
 import me.soknight.minigram.chats.events.ChatEvent
@@ -27,9 +28,11 @@ class ChatMessageService(
     private val dtoMapper: ChatDtoMapper,
     private val eventPublisher: ChatEventPublisher
 ) {
-    suspend fun getMessages(chatId: Long, userId: Uuid, profileClient: ProfileClient, page: Int, size: Int): List<ChatMessageDto> {
+    suspend fun getMessages(chatId: Long, userId: Uuid, profileClient: ProfileClient, page: Int, size: Int): PageDto<ChatMessageDto> {
         if (!memberRepository.existsById(chatId, userId)) throw MemberNotFoundException(chatId, userId)
-        return messageRepository.findByChatId(chatId, page, size).map { dtoMapper.toChatMessageDto(it, profileClient) }
+        val content = messageRepository.findByChatId(chatId, page, size).map { dtoMapper.toChatMessageDto(it, profileClient) }
+        val total   = messageRepository.countByChatId(chatId)
+        return PageDto(content, page, size, total)
     }
 
     suspend fun getMessage(chatId: Long, messageId: Long, userId: Uuid, profileClient: ProfileClient): ChatMessageDto {

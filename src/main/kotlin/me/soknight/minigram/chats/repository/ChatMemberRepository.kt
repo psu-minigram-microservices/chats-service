@@ -25,6 +25,12 @@ class ChatMemberRepository {
             .map { it[ChatMembersTable.userId] }
     }
 
+    suspend fun countByChatId(chatId: Long): Int = dbQuery {
+        ChatMembersTable.selectAll()
+            .where { ChatMembersTable.chatId eq chatId }
+            .count().toInt()
+    }
+
     suspend fun findByChatId(chatId: Long, page: Int, size: Int): List<ChatMemberRow> = dbQuery {
         ChatMembersTable.selectAll()
             .where { ChatMembersTable.chatId eq chatId }

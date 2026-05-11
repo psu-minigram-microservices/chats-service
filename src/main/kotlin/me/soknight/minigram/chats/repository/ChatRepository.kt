@@ -27,6 +27,13 @@ class ChatRepository {
             .map { ChatEntity.wrapRow(it).toDomain() }
     }
 
+    suspend fun countByMemberId(userId: Uuid): Int = dbQuery {
+        ChatsTable.innerJoin(ChatMembersTable)
+            .selectAll()
+            .where { ChatMembersTable.userId eq userId }
+            .count().toInt()
+    }
+
     suspend fun findById(chatId: Long): ChatRow? = dbQuery {
         ChatEntity.findById(chatId)?.toDomain()
     }

@@ -21,6 +21,12 @@ import org.koin.core.annotation.Single
 @Single
 class ChatMessageRepository {
 
+    suspend fun countByChatId(chatId: Long): Int = dbQuery {
+        ChatMessagesTable.selectAll()
+            .where { ChatMessagesTable.chatId eq chatId }
+            .count().toInt()
+    }
+
     suspend fun findByChatId(chatId: Long, page: Int, size: Int): List<ChatMessageRow> = dbQuery {
         ChatMessagesTable.selectAll()
             .where { ChatMessagesTable.chatId eq chatId }
