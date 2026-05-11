@@ -30,19 +30,17 @@ class ProfileClient(
         http.get("$baseUrl/api/v1/profiles/me") { auth() }.body()
     }
 
-    suspend fun getProfile(id: Uuid): ProfileDto = safe {
-        http.get("$baseUrl/api/v1/profiles/$id") { auth() }.body()
-    }
+    suspend fun getProfile(id: Uuid): ProfileDto =
+        safeOrNull { http.get("$baseUrl/api/v1/profiles/$id") { auth() }.body() }
+            ?: ProfileDto(userId = id, name = id.toString())
 
     suspend fun resolveMyProfileId(): Uuid = getMyProfile().userId
 
-    suspend fun getRelation(receiverId: Uuid, type: RelationType): ProfileRelationDto? = safe {
-        val response = http.get("$baseUrl/api/v1/profiles/relations/$receiverId") {
+    suspend fun getRelation(receiverId: Uuid, type: RelationType): ProfileRelationDto? =
+        safeOrNull { http.get("$baseUrl/api/v1/profiles/relations/$receiverId") {
             parameter("type", type.name)
             auth()
-        }
-        if (response.status == HttpStatusCode.NotFound) null else response.body()
-    }
+        }.body() }
 
     suspend fun getFriends(page: Int = 0, perPage: Int = 200): ProfilePageDto = safe {
         http.get("$baseUrl/api/v1/profiles/relations") {
@@ -56,6 +54,22 @@ class ProfileClient(
 
     private suspend fun <T> safe(block: suspend () -> T): T = try {
         block()
+    } catch (e: ResponseException) {
+        logger.error("Profile service HTTP error: {} {}", e.response.status.value, e.response.status.description, e)
+        throw ProfileServiceUnavailableException()
+    } catch (e: Exception) {
+        logger.error("Profile service connection failed: {}", e.message, e)
+        throw ProfileServiceUnavailableException()
+    }
+
+    private suspend fun <T> safeOrNull(block: suspend () -> T): T? = try {
+        block()
+    } catch (e: ClientRequestException) {
+        if (e.response.status == HttpStatusCode.NotFound) null
+        else {
+            logger.error("Profile service HTTP error: {} {}", e.response.status.value, e.response.status.description, e)
+            throw ProfileServiceUnavailableException()
+        }
     } catch (e: ResponseException) {
         logger.error("Profile service HTTP error: {} {}", e.response.status.value, e.response.status.description, e)
         throw ProfileServiceUnavailableException()
