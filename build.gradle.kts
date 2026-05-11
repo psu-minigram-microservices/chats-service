@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.koin.compiler)
+    alias(libs.plugins.ktor)
     application
 }
 
@@ -20,6 +21,18 @@ kotlin {
     jvmToolchain {
         languageVersion = JavaLanguageVersion.of(25)
     }
+}
+
+ktor {
+    openApi {
+        enabled = true
+        codeInferenceEnabled = true
+    }
+}
+
+koinCompiler {
+    compileSafety = false
+    userLogs = true
 }
 
 repositories {
@@ -74,11 +87,6 @@ dependencies {
     testImplementation(libs.ktor.client.websockets)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.mockk)
-}
-
-koinCompiler {
-    compileSafety = false
-    userLogs = true
 }
 
 tasks.test {
