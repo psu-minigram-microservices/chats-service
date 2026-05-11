@@ -5,20 +5,21 @@ WORKDIR /app
 COPY gradle/ gradle/
 COPY gradlew build.gradle.kts settings.gradle.kts ./
 
-RUN chmod +x gradlew && \
-    --mount=type=cache,target=/root/.gradle \
+RUN chmod +x gradlew
+
+RUN --mount=type=cache,target=/root/.gradle \
     ./gradlew dependencies --no-daemon || true
 
 COPY src/ src/
 
 RUN --mount=type=cache,target=/root/.gradle \
-    ./gradlew bootJar --no-daemon -x test
+    ./gradlew buildFatJar --no-daemon -x test
 
 FROM azul/zulu-openjdk:25-jre
 
 WORKDIR /app
 
-COPY --from=build /app/build/libs/*.jar app.jar
+COPY --from=build /app/build/libs/*-all.jar app.jar
 
 EXPOSE 8080
 

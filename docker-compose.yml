@@ -9,14 +9,12 @@ services:
         condition: service_healthy
     environment:
       JWT_SECRET: ${JWT_SECRET}
-      JWT_ISSUER: ${JWT_ISSUER}
-      JWT_AUDIENCE: ${JWT_AUDIENCE}
-      DB_HOST: postgres-chats
-      DB_PORT: ${CHATS_DB_PORT:-5432}
-      DB_NAME: ${CHATS_DB_NAME:-minigram_chats}
-      DB_USERNAME: ${CHATS_DB_USER:-minigram}
-      DB_PASSWORD: ${CHATS_DB_PASSWORD:-minigram}
-      SPRING_PROFILES_ACTIVE: ${CHATS_SPRING_PROFILES:-pg}
+      JWT_ISSUER: ${JWT_ISSUER:-Minigram}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-MinigramClient}
+      CHATS_DB_URL: jdbc:postgresql://postgres-chats:5432/${CHATS_DB_NAME:-minigram_chats}
+      CHATS_DB_USER: ${CHATS_DB_USER:-minigram}
+      CHATS_DB_PASSWORD: ${CHATS_DB_PASSWORD:-minigram}
+      PROFILE_SERVICE_URL: ${PROFILE_SERVICE_URL:-http://profile-service:5000}
     ports:
       - "${CHATS_SERVICE_PORT:-8080}:8080"
     networks:
@@ -37,7 +35,7 @@ services:
     networks:
       - minigram
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${CHATS_DB_USERNAME:-minigram} -d ${CHATS_DB_NAME:-minigram_chats}"]
+      test: ["CMD-SHELL", "pg_isready -U ${CHATS_DB_USER:-minigram} -d ${CHATS_DB_NAME:-minigram_chats}"]
       interval: 5s
       timeout: 3s
       retries: 5
