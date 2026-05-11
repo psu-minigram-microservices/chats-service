@@ -1,67 +1,54 @@
 [versions]
-jjwt = "0.13.0"
-lombok = "1.18.46"
-spring-boot = "4.0.6"
-spring-dependency-management = "1.1.7"
-springdoc = "3.0.3"
+exposed                 = "1.2.0"
+flyway                  = "12.5.0"
+h2                      = "2.3.232"
+hikaricp                = "7.0.2"
+koin                    = "4.2.1"
+koin-plugin             = "1.0.0-RC2"
+kotlin-platform         = "2.3.21"
+kotlinx-datetime        = "0.7.1"
+kotlinx-serialization   = "1.11.0"
+ktor                    = "3.4.3"
+logback                 = "1.5.32"
+mockk                   = "1.13.16"
+postgresql              = "42.7.11"
 
 [libraries]
-# --- spring boot starters ---
-spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
-spring-boot-starter-flyway = { module = "org.springframework.boot:spring-boot-starter-flyway" }
-spring-boot-starter-restclient = { module = "org.springframework.boot:spring-boot-starter-restclient" }
-spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
-spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
-spring-boot-starter-webmvc = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
-spring-boot-starter-websocket = { module = "org.springframework.boot:spring-boot-starter-websocket" }
+exposed-dao                         = { module = "org.jetbrains.exposed:exposed-dao",                   version.ref = "exposed" }
+exposed-jdbc                        = { module = "org.jetbrains.exposed:exposed-jdbc",                  version.ref = "exposed" }
+exposed-kotlin-datetime             = { module = "org.jetbrains.exposed:exposed-kotlin-datetime",       version.ref = "exposed" }
+flyway-core                         = { module = "org.flywaydb:flyway-core",                            version.ref = "flyway" }
+flyway-postgresql                   = { module = "org.flywaydb:flyway-database-postgresql",             version.ref = "flyway" }
+h2                                  = { module = "com.h2database:h2",                                   version.ref = "h2" }
+hikaricp                            = { module = "com.zaxxer:HikariCP",                                 version.ref = "hikaricp" }
+koin-core                           = { module = "io.insert-koin:koin-core",                            version.ref = "koin" }
+koin-ktor                           = { module = "io.insert-koin:koin-ktor",                            version.ref = "koin" }
+koin-annotations                    = { module = "io.insert-koin:koin-annotations",                    version.ref = "koin" }
+kotlinx-datetime                    = { module = "org.jetbrains.kotlinx:kotlinx-datetime",              version.ref = "kotlinx-datetime" }
+kotlinx-serialization-json          = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json",    version.ref = "kotlinx-serialization" }
+logback-classic                     = { module = "ch.qos.logback:logback-classic",                      version.ref = "logback" }
+mockk                               = { module = "io.mockk:mockk",                                      version.ref = "mockk" }
+postgresql                          = { module = "org.postgresql:postgresql",                           version.ref = "postgresql" }
 
-# --- spring boot test starters ---
-spring-boot-starter-data-jpa-test = { module = "org.springframework.boot:spring-boot-starter-data-jpa-test" }
-spring-boot-starter-flyway-test = { module = "org.springframework.boot:spring-boot-starter-flyway-test" }
-spring-boot-starter-restclient-test = { module = "org.springframework.boot:spring-boot-starter-restclient-test" }
-spring-boot-starter-security-test = { module = "org.springframework.boot:spring-boot-starter-security-test" }
-spring-boot-starter-validation-test = { module = "org.springframework.boot:spring-boot-starter-validation-test" }
-spring-boot-starter-webmvc-test = { module = "org.springframework.boot:spring-boot-starter-webmvc-test" }
-spring-boot-starter-websocket-test = { module = "org.springframework.boot:spring-boot-starter-websocket-test" }
-
-# --- 3rd-party ---
-flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql" }
-jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
-jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
-jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
-springdoc-openapi-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
-lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
-
-# --- runtime ---
-h2 = { module = "com.h2database:h2" }
-postgresql = { module = "org.postgresql:postgresql" }
-
-# --- test runtime ---
-junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
-
-[bundles]
-# --- spring boot starters ---
-spring-boot-starters = [
-    "spring-boot-starter-data-jpa",
-    "spring-boot-starter-flyway",
-    "spring-boot-starter-restclient",
-    "spring-boot-starter-security",
-    "spring-boot-starter-validation",
-    "spring-boot-starter-webmvc",
-    "spring-boot-starter-websocket",
-]
-
-# --- spring boot test starters ---
-spring-boot-test-starters = [
-    "spring-boot-starter-data-jpa-test",
-    "spring-boot-starter-flyway-test",
-    "spring-boot-starter-restclient-test",
-    "spring-boot-starter-security-test",
-    "spring-boot-starter-validation-test",
-    "spring-boot-starter-webmvc-test",
-    "spring-boot-starter-websocket-test",
-]
+ktor-client-cio                     = { module = "io.ktor:ktor-client-cio",                             version.ref = "ktor" }
+ktor-client-content-negotiation     = { module = "io.ktor:ktor-client-content-negotiation",             version.ref = "ktor" }
+ktor-client-mock                    = { module = "io.ktor:ktor-client-mock",                            version.ref = "ktor" }
+ktor-client-websockets              = { module = "io.ktor:ktor-client-websockets",                      version.ref = "ktor" }
+ktor-serialization-kotlinx-json     = { module = "io.ktor:ktor-serialization-kotlinx-json",             version.ref = "ktor" }
+ktor-server-auth                    = { module = "io.ktor:ktor-server-auth",                            version.ref = "ktor" }
+ktor-server-auth-jwt                = { module = "io.ktor:ktor-server-auth-jwt",                        version.ref = "ktor" }
+ktor-server-call-logging            = { module = "io.ktor:ktor-server-call-logging",                    version.ref = "ktor" }
+ktor-server-cio                     = { module = "io.ktor:ktor-server-cio",                             version.ref = "ktor" }
+ktor-server-content-negotiation     = { module = "io.ktor:ktor-server-content-negotiation",             version.ref = "ktor" }
+ktor-server-core                    = { module = "io.ktor:ktor-server-core",                            version.ref = "ktor" }
+ktor-server-openapi                 = { module = "io.ktor:ktor-server-openapi",                         version.ref = "ktor" }
+ktor-server-status-pages            = { module = "io.ktor:ktor-server-status-pages",                    version.ref = "ktor" }
+ktor-server-swagger-ui              = { module = "io.ktor:ktor-server-swagger",                         version.ref = "ktor" }
+ktor-server-test-host               = { module = "io.ktor:ktor-server-test-host",                       version.ref = "ktor" }
+ktor-server-websockets              = { module = "io.ktor:ktor-server-websockets",                      version.ref = "ktor" }
 
 [plugins]
-spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
-spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
+koin-compiler           = { id = "io.insert-koin.compiler.plugin",                  version.ref = "koin-plugin" }
+kotlin-jvm              = { id = "org.jetbrains.kotlin.jvm",                        version.ref = "kotlin-platform" }
+kotlin-serialization    = { id = "org.jetbrains.kotlin.plugin.serialization",       version.ref = "kotlin-platform" }
+ktor                    = { id = "io.ktor.plugin",                                  version.ref = "ktor" }

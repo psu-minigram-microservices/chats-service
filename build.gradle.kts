@@ -1,23 +1,38 @@
 plugins {
-    java
-    alias(libs.plugins.spring.boot)
-    alias(libs.plugins.spring.dependency.management)
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.koin.compiler)
+    alias(libs.plugins.ktor)
+    application
 }
 
 group = "me.soknight.minigram"
 version = "1.0"
-description = "chats-service"
 
-java {
-    toolchain {
+application {
+    mainClass.set("me.soknight.minigram.chats.ApplicationKt")
+}
+
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-opt-in=kotlin.uuid.ExperimentalUuidApi")
+    }
+
+    jvmToolchain {
         languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
-configurations {
-    compileOnly {
-        extendsFrom(configurations.annotationProcessor.get())
+ktor {
+    openApi {
+        enabled = true
+        codeInferenceEnabled = true
     }
+}
+
+koinCompiler {
+    compileSafety = false
+    userLogs = true
 }
 
 repositories {
@@ -25,23 +40,56 @@ repositories {
 }
 
 dependencies {
-    implementation(libs.bundles.spring.boot.starters)
-    implementation(libs.flyway.database.postgresql)
-    implementation(libs.jjwt.api)
-    implementation(libs.springdoc.openapi.webmvc.ui)
+    // Ktor Server
+    implementation(libs.ktor.server.cio)
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.server.auth)
+    implementation(libs.ktor.server.auth.jwt)
+    implementation(libs.ktor.server.websockets)
+    implementation(libs.ktor.server.status.pages)
+    implementation(libs.ktor.server.call.logging)
+    implementation(libs.ktor.server.openapi)
+    implementation(libs.ktor.server.swagger.ui)
 
-    annotationProcessor(libs.lombok)
+    // Ktor Client
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.content.negotiation)
 
-    runtimeOnly(libs.h2)
-    runtimeOnly(libs.jjwt.impl)
-    runtimeOnly(libs.jjwt.jackson)
+    // Koin
+    implementation(libs.koin.core)
+    implementation(libs.koin.ktor)
+    implementation(libs.koin.annotations)
+
+    // Exposed
+    implementation(libs.exposed.dao)
+    implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.kotlin.datetime)
+
+    // Database
+    implementation(libs.flyway.core)
+    implementation(libs.flyway.postgresql)
+    implementation(libs.hikaricp)
     runtimeOnly(libs.postgresql)
+    runtimeOnly(libs.h2)
 
-    testImplementation(libs.bundles.spring.boot.test.starters)
+    // Serialization / Datetime
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.datetime)
 
-    testRuntimeOnly(libs.junit.platform.launcher)
+    // Logging
+    implementation(libs.logback.classic)
+
+    // Testing
+    testImplementation(kotlin("test"))
+    testImplementation(libs.ktor.client.mock)
+    testImplementation(libs.ktor.client.websockets)
+    testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.mockk)
 }
 
-tasks.withType<Test> {
+tasks.test {
+    jvmArgs("-Dnet.bytebuddy.experimental=true")
     useJUnitPlatform()
 }
