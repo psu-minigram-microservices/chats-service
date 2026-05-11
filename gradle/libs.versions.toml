@@ -51,3 +51,4 @@ ktor-server-websockets              = { module = "io.ktor:ktor-server-websockets
 koin-compiler           = { id = "io.insert-koin.compiler.plugin",                  version.ref = "koin-plugin" }
 kotlin-jvm              = { id = "org.jetbrains.kotlin.jvm",                        version.ref = "kotlin-platform" }
 kotlin-serialization    = { id = "org.jetbrains.kotlin.plugin.serialization",       version.ref = "kotlin-platform" }
+ktor                    = { id = "io.ktor.plugin",                                  version.ref = "ktor" }

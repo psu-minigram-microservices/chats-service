@@ -27,4 +27,5 @@ fun Application.setup(vararg extraModules: Module = emptyArray()) {
     configureStatusPages()
     configureRouting(get(), get(), get(), get())
     configureWebSockets(get(), get())
+    configureSwagger()
 }
