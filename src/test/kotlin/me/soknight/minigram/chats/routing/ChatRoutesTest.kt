@@ -11,8 +11,8 @@ import io.ktor.server.config.*
 import io.ktor.server.testing.*
 import me.soknight.minigram.chats.dto.ChatDto
 import me.soknight.minigram.chats.mockProfileClientFactory
-import me.soknight.minigram.chats.module
 import me.soknight.minigram.chats.plugin.appJson
+import me.soknight.minigram.chats.setup
 import me.soknight.minigram.chats.testToken
 import org.koin.dsl.module
 import kotlin.uuid.ExperimentalUuidApi
@@ -26,7 +26,7 @@ class ChatRoutesTest {
         val mockFactory = mockProfileClientFactory(userId)
         environment { config = ApplicationConfig("application.conf") }
         application {
-            module(module {
+            setup(module {
                 single { mockFactory }
             })
         }

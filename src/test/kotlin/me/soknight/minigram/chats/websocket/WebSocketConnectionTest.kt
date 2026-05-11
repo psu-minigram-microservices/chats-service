@@ -8,7 +8,7 @@ import io.ktor.server.testing.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.withTimeoutOrNull
 import me.soknight.minigram.chats.mockProfileClientFactory
-import me.soknight.minigram.chats.module
+import me.soknight.minigram.chats.setup
 import me.soknight.minigram.chats.testToken
 import org.koin.dsl.module
 import kotlin.test.Test
@@ -25,7 +25,7 @@ class WebSocketConnectionTest {
         val mockFactory = mockProfileClientFactory(userId)
         environment { config = ApplicationConfig("application.conf") }
         application {
-            module(module {
+            setup(module {
                 single { mockFactory }
             })
         }
