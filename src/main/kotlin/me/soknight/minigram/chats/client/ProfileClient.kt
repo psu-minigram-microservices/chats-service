@@ -4,6 +4,7 @@ package me.soknight.minigram.chats.client
 
 import io.ktor.client.*
 import io.ktor.client.call.*
+import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import me.soknight.minigram.chats.dto.ProfileDto
@@ -12,8 +13,11 @@ import me.soknight.minigram.chats.dto.ProfileRelationDto
 import me.soknight.minigram.chats.exception.ProfileServiceUnavailableException
 import me.soknight.minigram.chats.model.RelationStatus
 import me.soknight.minigram.chats.model.RelationType
+import org.slf4j.LoggerFactory
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+
+private val logger = LoggerFactory.getLogger(ProfileClient::class.java)
 
 class ProfileClient(
     private val http: HttpClient,
@@ -50,6 +54,13 @@ class ProfileClient(
         }.body()
     }
 
-    private suspend fun <T> safe(block: suspend () -> T): T =
-        runCatching { block() }.getOrElse { throw ProfileServiceUnavailableException() }
+    private suspend fun <T> safe(block: suspend () -> T): T = try {
+        block()
+    } catch (e: ResponseException) {
+        logger.error("Profile service HTTP error: {} {}", e.response.status.value, e.response.status.description, e)
+        throw ProfileServiceUnavailableException()
+    } catch (e: Exception) {
+        logger.error("Profile service connection failed: {}", e.message, e)
+        throw ProfileServiceUnavailableException()
+    }
 }
