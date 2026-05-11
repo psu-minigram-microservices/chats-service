@@ -25,6 +25,7 @@ cp .env.example .env
 | `CHATS_DB_NAME`         | Database name                     | `minigram_chats` |
 | `CHATS_DB_USER`         | Database user                     | `minigram`       |
 | `CHATS_DB_PASSWORD`     | Database password                 | `minigram`       |
+| `CHATS_DB_PORT`         | Database port                     | `5432`           |
 | `CHATS_SERVICE_PORT`    | Application exposed port          | `8080`           |
 
 ### Run service
