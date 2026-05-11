@@ -13,10 +13,12 @@ fun main(args: Array<String>) {
     EngineMain.main(args)
 }
 
-fun Application.module(vararg extraModules: Module = emptyArray()) {
+fun Application.module() = setup()
+
+fun Application.setup(vararg extraModules: Module = emptyArray()) {
     install(Koin) {
         if (extraModules.isNotEmpty()) allowOverride(true)
-        modules(AppModule(this@module).buildKoinModule(), *extraModules)
+        modules(AppModule(this@setup).buildKoinModule(), *extraModules)
     }
 
     configureDatabase(get())
