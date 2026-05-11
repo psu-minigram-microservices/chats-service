@@ -7,13 +7,15 @@ import io.ktor.server.websocket.*
 import io.ktor.utils.io.ExperimentalKtorApi
 import io.ktor.websocket.*
 import me.soknight.minigram.chats.auth.JwtTokenProvider
+import me.soknight.minigram.chats.client.ProfileClientFactory
 import me.soknight.minigram.chats.websocket.WebSocketConnectionManager
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalKtorApi::class)
 fun Application.configureWebSockets(
     jwtTokenProvider: JwtTokenProvider,
-    connectionManager: WebSocketConnectionManager
+    connectionManager: WebSocketConnectionManager,
+    profileClientFactory: ProfileClientFactory
 ) {
     install(WebSockets) {
         pingPeriod = 30.seconds
@@ -24,14 +26,15 @@ fun Application.configureWebSockets(
             webSocket {
                 val token = call.request.queryParameters["token"]
                     ?: return@webSocket close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "token required"))
-                val userId = jwtTokenProvider.validateAndGetUserId(token)
+                jwtTokenProvider.validateAndGetUserId(token)
                     ?: return@webSocket close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "invalid token"))
+                val profileId = profileClientFactory.create(token).resolveMyProfileId()
 
-                connectionManager.register(userId, this)
+                connectionManager.register(profileId, this)
                 try {
                     for (frame in incoming) { /* client-to-server frames ignored */ }
                 } finally {
-                    connectionManager.unregister(userId, this)
+                    connectionManager.unregister(profileId, this)
                 }
             }
         }.hide()

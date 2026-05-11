@@ -10,7 +10,6 @@ import io.ktor.server.routing.openapi.describe
 import io.ktor.utils.io.ExperimentalKtorApi
 import me.soknight.minigram.chats.client.ProfileClientFactory
 import me.soknight.minigram.chats.exception.ValidationException
-import me.soknight.minigram.chats.plugin.currentUserId
 import me.soknight.minigram.chats.service.ChatMemberService
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -20,30 +19,36 @@ fun Route.chatMemberRoutes(memberService: ChatMemberService, profileClientFactor
     authenticate("jwt") {
         route("/api/v1/chats/{chat_id}/members") {
             get {
+                val profileClient = profileClientFactory.create(call.bearerToken())
                 val page = call.queryInt("page", 0)
                 val size = call.queryInt("size", 20)
-                call.respond(memberService.getMembers(call.chatId(), call.currentUserId(), profileClientFactory.create(call.bearerToken()), page, size))
+                call.respond(memberService.getMembers(call.chatId(), profileClient.resolveMyProfileId(), profileClient, page, size))
             }
             route("/me") {
                 get {
-                    val userId = call.currentUserId()
-                    call.respond(memberService.getMember(call.chatId(), userId, userId, profileClientFactory.create(call.bearerToken())))
+                    val profileClient = profileClientFactory.create(call.bearerToken())
+                    val profileId = profileClient.resolveMyProfileId()
+                    call.respond(memberService.getMember(call.chatId(), profileId, profileId, profileClient))
                 }
                 delete {
-                    memberService.leaveChat(call.chatId(), call.currentUserId())
+                    val profileClient = profileClientFactory.create(call.bearerToken())
+                    memberService.leaveChat(call.chatId(), profileClient.resolveMyProfileId())
                     call.respond(HttpStatusCode.NoContent)
                 }
             }
             route("/{member_id}") {
                 post {
-                    memberService.inviteUser(call.chatId(), call.memberId(), call.currentUserId(), profileClientFactory.create(call.bearerToken()))
+                    val profileClient = profileClientFactory.create(call.bearerToken())
+                    memberService.inviteUser(call.chatId(), call.memberId(), profileClient.resolveMyProfileId(), profileClient)
                     call.respond(HttpStatusCode.NoContent)
                 }
                 get {
-                    call.respond(memberService.getMember(call.chatId(), call.memberId(), call.currentUserId(), profileClientFactory.create(call.bearerToken())))
+                    val profileClient = profileClientFactory.create(call.bearerToken())
+                    call.respond(memberService.getMember(call.chatId(), call.memberId(), profileClient.resolveMyProfileId(), profileClient))
                 }
                 delete {
-                    memberService.kickUser(call.chatId(), call.memberId(), call.currentUserId())
+                    val profileClient = profileClientFactory.create(call.bearerToken())
+                    memberService.kickUser(call.chatId(), call.memberId(), profileClient.resolveMyProfileId())
                     call.respond(HttpStatusCode.NoContent)
                 }
             }

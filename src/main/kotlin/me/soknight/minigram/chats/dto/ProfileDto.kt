@@ -2,6 +2,7 @@
 
 package me.soknight.minigram.chats.dto
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import me.soknight.minigram.chats.model.RelationStatus
 import kotlin.uuid.ExperimentalUuidApi
@@ -9,7 +10,7 @@ import kotlin.uuid.Uuid
 
 @Serializable
 data class ProfileDto(
-    val userId: Uuid,
+    @SerialName("id") val userId: Uuid,
     val name: String,
     val photoUrl: String? = null
 )

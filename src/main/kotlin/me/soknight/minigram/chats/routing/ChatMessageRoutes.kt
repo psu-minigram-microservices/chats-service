@@ -11,7 +11,6 @@ import me.soknight.minigram.chats.client.ProfileClientFactory
 import me.soknight.minigram.chats.dto.request.EditMessageRequest
 import me.soknight.minigram.chats.dto.request.SendMessageRequest
 import me.soknight.minigram.chats.exception.ValidationException
-import me.soknight.minigram.chats.plugin.currentUserId
 import me.soknight.minigram.chats.service.ChatMessageService
 
 @OptIn(ExperimentalKtorApi::class)
@@ -19,26 +18,32 @@ fun Route.chatMessageRoutes(messageService: ChatMessageService, profileClientFac
     authenticate("jwt") {
         route("/api/v1/chats/{chat_id}/messages") {
             get {
+                val profileClient = profileClientFactory.create(call.bearerToken())
                 val page = call.queryInt("page", 0)
                 val size = call.queryInt("size", 20)
-                call.respond(messageService.getMessages(call.chatId(), call.currentUserId(), profileClientFactory.create(call.bearerToken()), page, size))
+                call.respond(messageService.getMessages(call.chatId(), profileClient.resolveMyProfileId(), profileClient, page, size))
             }
             post {
-                val dto = messageService.sendMessage(call.chatId(), call.receive<SendMessageRequest>(), call.currentUserId(), profileClientFactory.create(call.bearerToken()))
+                val profileClient = profileClientFactory.create(call.bearerToken())
+                val dto = messageService.sendMessage(call.chatId(), call.receive<SendMessageRequest>(), profileClient.resolveMyProfileId(), profileClient)
                 call.respond(HttpStatusCode.Created, dto)
             }
             route("/{message_id}") {
                 get {
-                    call.respond(messageService.getMessage(call.chatId(), call.messageId(), call.currentUserId(), profileClientFactory.create(call.bearerToken())))
+                    val profileClient = profileClientFactory.create(call.bearerToken())
+                    call.respond(messageService.getMessage(call.chatId(), call.messageId(), profileClient.resolveMyProfileId(), profileClient))
                 }
                 patch {
-                    call.respond(messageService.editMessage(call.chatId(), call.messageId(), call.receive<EditMessageRequest>(), call.currentUserId(), profileClientFactory.create(call.bearerToken())))
+                    val profileClient = profileClientFactory.create(call.bearerToken())
+                    call.respond(messageService.editMessage(call.chatId(), call.messageId(), call.receive<EditMessageRequest>(), profileClient.resolveMyProfileId(), profileClient))
                 }
                 put {
-                    call.respond(messageService.editMessage(call.chatId(), call.messageId(), call.receive<EditMessageRequest>(), call.currentUserId(), profileClientFactory.create(call.bearerToken())))
+                    val profileClient = profileClientFactory.create(call.bearerToken())
+                    call.respond(messageService.editMessage(call.chatId(), call.messageId(), call.receive<EditMessageRequest>(), profileClient.resolveMyProfileId(), profileClient))
                 }
                 delete {
-                    messageService.deleteMessage(call.chatId(), call.messageId(), call.currentUserId())
+                    val profileClient = profileClientFactory.create(call.bearerToken())
+                    messageService.deleteMessage(call.chatId(), call.messageId(), profileClient.resolveMyProfileId())
                     call.respond(HttpStatusCode.NoContent)
                 }
             }

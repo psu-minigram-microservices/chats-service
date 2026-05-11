@@ -7,49 +7,60 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.routing.openapi.describe
 import io.ktor.utils.io.ExperimentalKtorApi
+import me.soknight.minigram.chats.client.ProfileClient
 import me.soknight.minigram.chats.client.ProfileClientFactory
 import me.soknight.minigram.chats.dto.request.CreateChatRequest
 import me.soknight.minigram.chats.dto.request.EditChatRequest
 import me.soknight.minigram.chats.exception.ValidationException
-import me.soknight.minigram.chats.plugin.currentUserId
 import me.soknight.minigram.chats.service.ChatService
+import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalKtorApi::class)
 fun Route.chatRoutes(chatService: ChatService, profileClientFactory: ProfileClientFactory) {
     authenticate("jwt") {
         route("/api/v1/chats") {
             get {
-                val userId = call.currentUserId()
-                val page   = call.queryInt("page", 0)
-                val size   = call.queryInt("size", 20)
-                call.respond(chatService.getChats(userId, profileClientFactory.create(call.bearerToken()), page, size))
+                val profileClient = profileClientFactory.create(call.bearerToken())
+                val profileId = profileClient.resolveMyProfileId()
+                val page      = call.queryInt("page", 0)
+                val size      = call.queryInt("size", 20)
+                call.respond(chatService.getChats(profileId, profileClient, page, size))
             }
             post {
+                val profileClient = profileClientFactory.create(call.bearerToken())
                 val dto = chatService.createChat(
                     call.receive<CreateChatRequest>(),
-                    call.currentUserId(),
-                    profileClientFactory.create(call.bearerToken())
+                    profileClient.resolveMyProfileId(),
+                    profileClient
                 )
                 call.respond(HttpStatusCode.Created, dto)
             }
             route("/{chat_id}") {
                 get {
-                    call.respond(chatService.getChat(call.chatId(), call.currentUserId(), profileClientFactory.create(call.bearerToken())))
+                    val profileClient = profileClientFactory.create(call.bearerToken())
+                    call.respond(chatService.getChat(call.chatId(), profileClient.resolveMyProfileId(), profileClient))
                 }
                 patch {
-                    call.respond(chatService.editChat(call.chatId(), call.receive<EditChatRequest>(), call.currentUserId(), profileClientFactory.create(call.bearerToken())))
+                    val profileClient = profileClientFactory.create(call.bearerToken())
+                    call.respond(chatService.editChat(call.chatId(), call.receive<EditChatRequest>(), profileClient.resolveMyProfileId(), profileClient))
                 }
                 put {
-                    call.respond(chatService.editChat(call.chatId(), call.receive<EditChatRequest>(), call.currentUserId(), profileClientFactory.create(call.bearerToken())))
+                    val profileClient = profileClientFactory.create(call.bearerToken())
+                    call.respond(chatService.editChat(call.chatId(), call.receive<EditChatRequest>(), profileClient.resolveMyProfileId(), profileClient))
                 }
                 delete {
-                    chatService.deleteChat(call.chatId(), call.currentUserId())
+                    val profileClient = profileClientFactory.create(call.bearerToken())
+                    chatService.deleteChat(call.chatId(), profileClient.resolveMyProfileId())
                     call.respond(HttpStatusCode.NoContent)
                 }
             }
         }.describe { tag("Chats") }
     }
 }
+
+internal suspend fun ProfileClient.resolveMyProfileIdOrNull(): Uuid? = try {
+    resolveMyProfileId()
+} catch (e: Exception) { null }
 
 internal fun RoutingCall.chatId(): Long =
     parameters["chat_id"]?.toLongOrNull() ?: throw ValidationException("chat_id must be a number")
