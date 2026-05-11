@@ -38,14 +38,14 @@ class ProfileClient(
 
     suspend fun getRelation(receiverId: Uuid, type: RelationType): ProfileRelationDto? =
         safeOrNull { http.get("$baseUrl/api/v1/profiles/relations/$receiverId") {
-            parameter("type", type.name)
+            parameter("type", type.ordinal)
             auth()
         }.body() }
 
     suspend fun getFriends(page: Int = 0, perPage: Int = 200): ProfilePageDto = safe {
         http.get("$baseUrl/api/v1/profiles/relations") {
-            parameter("status", RelationStatus.FRIEND.name)
-            parameter("type", RelationType.OUTGOING.name)
+            parameter("status", RelationStatus.FRIEND.ordinal)
+            parameter("type", RelationType.OUTGOING.ordinal)
             parameter("Page", page)
             parameter("PerPage", perPage)
             auth()

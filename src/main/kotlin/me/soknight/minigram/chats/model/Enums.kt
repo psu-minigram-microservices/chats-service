@@ -18,9 +18,9 @@ enum class ChatMemberRole {
 
 @Serializable
 enum class RelationStatus {
-    @SerialName("none") NONE,
-    @SerialName("friend") FRIEND,
-    @SerialName("blocked") BLOCKED
+    @SerialName("None") NONE,
+    @SerialName("Friend") FRIEND,
+    @SerialName("Blocked") BLOCKED
 }
 
 enum class RelationType { INCOMING, OUTGOING }
