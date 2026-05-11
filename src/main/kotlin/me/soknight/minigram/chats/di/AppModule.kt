@@ -6,7 +6,7 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import me.soknight.minigram.chats.config.*
-import me.soknight.minigram.chats.plugin.appJson
+import me.soknight.minigram.chats.plugin.profileServiceJson
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Single
@@ -22,7 +22,7 @@ class AppModule(private val application: Application) {
 
     @Single
     fun provideHttpClient(): HttpClient = HttpClient(CIO) {
-        install(ContentNegotiation) { json(appJson) }
+        install(ContentNegotiation) { json(profileServiceJson) }
         expectSuccess = true
     }
 }
