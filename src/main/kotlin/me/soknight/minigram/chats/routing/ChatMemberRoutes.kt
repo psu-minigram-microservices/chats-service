@@ -6,6 +6,8 @@ import io.ktor.http.*
 import io.ktor.server.auth.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.routing.openapi.describe
+import io.ktor.utils.io.ExperimentalKtorApi
 import me.soknight.minigram.chats.client.ProfileClientFactory
 import me.soknight.minigram.chats.exception.ValidationException
 import me.soknight.minigram.chats.plugin.currentUserId
@@ -13,6 +15,7 @@ import me.soknight.minigram.chats.service.ChatMemberService
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+@OptIn(ExperimentalKtorApi::class)
 fun Route.chatMemberRoutes(memberService: ChatMemberService, profileClientFactory: ProfileClientFactory) {
     authenticate("jwt") {
         route("/api/v1/chats/{chat_id}/members") {
@@ -44,7 +47,7 @@ fun Route.chatMemberRoutes(memberService: ChatMemberService, profileClientFactor
                     call.respond(HttpStatusCode.NoContent)
                 }
             }
-        }
+        }.describe { tag("Chat Members") }
     }
 }
 

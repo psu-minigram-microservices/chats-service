@@ -5,6 +5,8 @@ import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.routing.openapi.describe
+import io.ktor.utils.io.ExperimentalKtorApi
 import me.soknight.minigram.chats.client.ProfileClientFactory
 import me.soknight.minigram.chats.dto.request.EditMessageRequest
 import me.soknight.minigram.chats.dto.request.SendMessageRequest
@@ -12,6 +14,7 @@ import me.soknight.minigram.chats.exception.ValidationException
 import me.soknight.minigram.chats.plugin.currentUserId
 import me.soknight.minigram.chats.service.ChatMessageService
 
+@OptIn(ExperimentalKtorApi::class)
 fun Route.chatMessageRoutes(messageService: ChatMessageService, profileClientFactory: ProfileClientFactory) {
     authenticate("jwt") {
         route("/api/v1/chats/{chat_id}/messages") {
@@ -39,7 +42,7 @@ fun Route.chatMessageRoutes(messageService: ChatMessageService, profileClientFac
                     call.respond(HttpStatusCode.NoContent)
                 }
             }
-        }
+        }.describe { tag("Chat Messages") }
     }
 }
 
