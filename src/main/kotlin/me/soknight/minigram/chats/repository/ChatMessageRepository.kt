@@ -59,7 +59,7 @@ class ChatMessageRepository {
             it[ChatMessagesTable.createdAt] = now
             it[ChatMessagesTable.updatedAt] = now
         }
-        ChatMessageRow(chatId, messageId, senderId, content, now, now)
+        ChatMessageRow(chatId, messageId, senderId, content, false, now, now)
     }
 
     suspend fun updateContent(chatId: Long, messageId: Long, content: String): Unit = dbQuery {
@@ -82,6 +82,7 @@ class ChatMessageRepository {
         messageId = this[ChatMessagesTable.messageId],
         senderId  = this[ChatMessagesTable.senderId],
         content   = this[ChatMessagesTable.content],
+        encrypted = this[ChatMessagesTable.encrypted],
         createdAt = this[ChatMessagesTable.createdAt],
         updatedAt = this[ChatMessagesTable.updatedAt]
     )

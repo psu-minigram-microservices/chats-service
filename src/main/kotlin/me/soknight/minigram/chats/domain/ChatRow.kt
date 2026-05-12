@@ -31,6 +31,17 @@ data class ChatMessageRow(
     val messageId: Long,
     val senderId: Uuid,
     val content: String,
+    val encrypted: Boolean = false,
+    val createdAt: Instant,
+    val updatedAt: Instant
+)
+
+data class UserPublicKeyRow(
+    val userId: Uuid,
+    val publicKey: String,
+    val backupSalt: String?,
+    val backupIv: String?,
+    val backupCiphertext: String?,
     val createdAt: Instant,
     val updatedAt: Instant
 )

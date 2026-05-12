@@ -57,8 +57,20 @@ object ChatMessagesTable : Table("chat_messages") {
     val chatId    = long("chat_id").references(ChatsTable.id, onDelete = ReferenceOption.CASCADE)
     val messageId = long("message_id")
     val senderId  = uuid("sender_id")
-    val content   = varchar("content", 4000)
+    val content   = text("content")
+    val encrypted = bool("encrypted").default(false)
     val createdAt = timestamp("created_at")
     val updatedAt = timestamp("updated_at")
     override val primaryKey = PrimaryKey(chatId, messageId)
+}
+
+object UserPublicKeysTable : Table("user_public_keys") {
+    val userId           = uuid("user_id")
+    val publicKey        = text("public_key")
+    val backupSalt       = text("backup_salt").nullable()
+    val backupIv         = text("backup_iv").nullable()
+    val backupCiphertext = text("backup_ciphertext").nullable()
+    val createdAt        = timestamp("created_at")
+    val updatedAt        = timestamp("updated_at")
+    override val primaryKey = PrimaryKey(userId)
 }

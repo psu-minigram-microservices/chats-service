@@ -62,3 +62,9 @@ class ProfileServiceInvalidResponseException
 
 class ValidationException(message: String)
     : AppException(HttpStatusCode.BadRequest, "incorrect_field_value", message)
+
+class PublicKeyNotFoundException(userId: Uuid)
+    : AppException(HttpStatusCode.NotFound, "public_key_not_found", "Public key for user $userId not found")
+
+class KeyBackupNotFoundException
+    : AppException(HttpStatusCode.NotFound, "key_backup_not_found", "Key backup not found for current user")
