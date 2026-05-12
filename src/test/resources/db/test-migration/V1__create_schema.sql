@@ -20,10 +20,11 @@ create table chat_members (
 );
 
 create table chat_messages (
-    chat_id bigint not null,
-    message_id bigint not null,
-    sender_id uuid not null,
-    content varchar(4000) not null,
+    chat_id    bigint  not null,
+    message_id bigint  not null,
+    sender_id  uuid    not null,
+    content    text    not null,
+    encrypted  boolean not null default false,
     created_at timestamp with time zone not null,
     updated_at timestamp with time zone not null,
     constraint pk_chat_messages primary key (chat_id, message_id),
@@ -31,4 +32,14 @@ create table chat_messages (
         foreign key (chat_id) references chats (id) on delete cascade,
     constraint fk_chat_messages_sender
         foreign key (chat_id, sender_id) references chat_members (chat_id, user_id)
+);
+
+create table user_public_keys (
+    user_id           uuid                     not null primary key,
+    public_key        text                     not null,
+    backup_salt       text,
+    backup_iv         text,
+    backup_ciphertext text,
+    created_at        timestamp with time zone not null,
+    updated_at        timestamp with time zone not null
 );
