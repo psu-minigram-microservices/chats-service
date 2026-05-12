@@ -14,9 +14,12 @@ import io.ktor.utils.io.ExperimentalKtorApi
 private val apiInfo = OpenApiInfo(
     title = "Chats API",
     version = "1.0",
-    description = "API for managing chats, members, messages and end-to-end encryption keys.\n" +
-        "All endpoints require a JWT Bearer token in the `Authorization` header.\n" +
-        "Tokens are issued by the auth-service."
+    description = """
+        API for managing chats, members, messages and end-to-end encryption keys.
+
+        All endpoints require a JWT Bearer token in the `Authorization` header.
+        Tokens are issued by the auth-service.
+    """.trimIndent()
 )
 
 @OptIn(ExperimentalKtorApi::class)
@@ -26,10 +29,11 @@ fun Application.configureSwagger() {
     routing {
         swaggerUI(path = "swagger") {
             info = apiInfo
+            source = OpenApiDocSource.Routing(contentType = ContentType.Application.Json)
         }
 
         get("/openapi") {
-            val spec = OpenApiDocSource.Routing(contentType = ContentType.Application.Yaml)
+            val spec = OpenApiDocSource.Routing(contentType = ContentType.Application.Json)
                 .read(application, OpenApiDoc(info = apiInfo))!!
             call.respondText(spec.content, spec.contentType)
         }.hide()
