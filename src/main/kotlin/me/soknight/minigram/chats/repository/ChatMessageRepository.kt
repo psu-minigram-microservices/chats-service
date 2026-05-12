@@ -49,17 +49,18 @@ class ChatMessageRepository {
             .singleOrNull()?.get(ChatMessagesTable.messageId)
     }
 
-    suspend fun insert(chatId: Long, messageId: Long, senderId: Uuid, content: String): ChatMessageRow = dbQuery {
+    suspend fun insert(chatId: Long, messageId: Long, senderId: Uuid, content: String, encrypted: Boolean = false): ChatMessageRow = dbQuery {
         val now = Clock.System.now()
         ChatMessagesTable.insert {
-            it[ChatMessagesTable.chatId]    = chatId
-            it[ChatMessagesTable.messageId] = messageId
-            it[ChatMessagesTable.senderId]  = senderId
-            it[ChatMessagesTable.content]   = content
-            it[ChatMessagesTable.createdAt] = now
-            it[ChatMessagesTable.updatedAt] = now
+            it[ChatMessagesTable.chatId]     = chatId
+            it[ChatMessagesTable.messageId]  = messageId
+            it[ChatMessagesTable.senderId]   = senderId
+            it[ChatMessagesTable.content]    = content
+            it[ChatMessagesTable.encrypted]  = encrypted
+            it[ChatMessagesTable.createdAt]  = now
+            it[ChatMessagesTable.updatedAt]  = now
         }
-        ChatMessageRow(chatId, messageId, senderId, content, false, now, now)
+        ChatMessageRow(chatId, messageId, senderId, content, encrypted, now, now)
     }
 
     suspend fun updateContent(chatId: Long, messageId: Long, content: String): Unit = dbQuery {

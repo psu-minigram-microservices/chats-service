@@ -42,8 +42,13 @@ class ChatMessageService(
     }
 
     suspend fun sendMessage(chatId: Long, request: SendMessageRequest, userId: Uuid, profileClient: ProfileClient): ChatMessageDto {
-        if (request.content.isBlank()) throw ValidationException("content must not be blank")
-        if (request.content.length > 4000) throw ValidationException("content must not exceed 4000 characters")
+        // For encrypted content: skip blank check (ciphertext is base64 binary data)
+        if (!request.encrypted && request.content.isBlank())
+            throw ValidationException("content must not be blank")
+        // Encrypted content max ≈ 24000 chars (worst-case base64 of 4000-char UTF-8 + overhead)
+        val maxLen = if (request.encrypted) 24_000 else 4_000
+        if (request.content.length > maxLen)
+            throw ValidationException("content must not exceed $maxLen characters")
         val chat = chatRepository.findAccessibleById(chatId, userId) ?: throw ChatNotFoundException(chatId)
 
         if (chat.type == ChatType.DIRECT) {
@@ -55,7 +60,7 @@ class ChatMessageService(
         }
 
         val messageId = chatRepository.incrementMessageSequence(chatId)
-        val message   = messageRepository.insert(chatId, messageId, userId, request.content)
+        val message   = messageRepository.insert(chatId, messageId, userId, request.content, request.encrypted)
         chatRepository.updateLastMessageId(chatId, messageId)
         val dto = dtoMapper.toChatMessageDto(message, profileClient)
         eventPublisher.publish(chatId, ChatEvent(

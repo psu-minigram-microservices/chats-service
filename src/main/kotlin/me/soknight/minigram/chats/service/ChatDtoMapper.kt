@@ -56,6 +56,7 @@ class ChatDtoMapper(
             chat      = chatDto,
             sender    = toChatMemberDto(senderRow, profileClient, cache),
             content   = message.content,
+            encrypted = message.encrypted,
             createdAt = message.createdAt,
             updatedAt = message.updatedAt
         )

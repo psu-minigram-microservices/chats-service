@@ -50,4 +50,20 @@ class ChatMessageServiceTest {
         coEvery { messageRepo.findById(1L, 5L) } returns message(Uuid.random())
         assertFailsWith<AccessDeniedException> { service.deleteMessage(1L, 5L, senderId) }
     }
+
+    @Test fun `sendMessage encrypted content skips blank check`() = runBlocking {
+        val chat = mockk<me.soknight.minigram.chats.domain.ChatRow>(relaxed = true) {
+            every { type } returns me.soknight.minigram.chats.model.ChatType.DIRECT
+        }
+        coEvery { chatRepo.findAccessibleById(any(), any()) } returns chat
+        coEvery { memberRepo.existsById(any(), any()) } returns true
+        coEvery { memberRepo.findUserIdsByChatId(any()) } returns emptyList()
+        coEvery { chatRepo.incrementMessageSequence(any()) } returns 1L
+        coEvery { messageRepo.insert(any(), any(), any(), any(), true) } returns message()
+        coEvery { chatRepo.updateLastMessageId(any(), any()) } just Runs
+        coEvery { mapper.toChatMessageDto(any(), any()) } returns mockk(relaxed = true)
+
+        // Should NOT throw even though content looks empty in base64
+        service.sendMessage(1L, SendMessageRequest("AAAAAAAAAAAAAAAA", encrypted = true), senderId, client)
+    }
 }
