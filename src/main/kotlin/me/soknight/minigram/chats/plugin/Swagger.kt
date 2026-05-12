@@ -14,12 +14,9 @@ import io.ktor.utils.io.ExperimentalKtorApi
 private val apiInfo = OpenApiInfo(
     title = "Chats API",
     version = "1.0",
-    description = """
-        API for managing chats, members, messages and end-to-end encryption keys.
-
-        All endpoints require a JWT Bearer token in the `Authorization` header.
-        Tokens are issued by the auth-service.
-    """.trimIndent()
+    description = "API for managing chats, members, messages and end-to-end encryption keys.\n" +
+        "All endpoints require a JWT Bearer token in the `Authorization` header.\n" +
+        "Tokens are issued by the auth-service."
 )
 
 @OptIn(ExperimentalKtorApi::class)
