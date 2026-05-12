@@ -36,6 +36,7 @@ data class ChatMessageDto(
     val chat: ChatDto,
     val sender: ChatMemberDto,
     val content: String,
+    val encrypted: Boolean = false,
     val createdAt: Instant,
     val updatedAt: Instant
 )

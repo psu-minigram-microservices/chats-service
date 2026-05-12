@@ -29,7 +29,7 @@ class ChatMessageServiceTest {
     private val client      = mockProfileClient(senderId)
 
     private fun message(sender: Uuid = senderId) =
-        ChatMessageRow(1L, 5L, sender, "hello", Clock.System.now(), Clock.System.now())
+        ChatMessageRow(1L, 5L, sender, "hello", false, Clock.System.now(), Clock.System.now())
 
     @Test fun `sendMessage blank content throws ValidationException`() = runBlocking {
         coEvery { chatRepo.findAccessibleById(any(), any()) } returns mockk(relaxed = true)
