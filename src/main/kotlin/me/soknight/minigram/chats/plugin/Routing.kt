@@ -10,16 +10,19 @@ import me.soknight.minigram.chats.client.ProfileClientFactory
 import me.soknight.minigram.chats.routing.chatMemberRoutes
 import me.soknight.minigram.chats.routing.chatMessageRoutes
 import me.soknight.minigram.chats.routing.chatRoutes
+import me.soknight.minigram.chats.routing.userKeyRoutes
 import me.soknight.minigram.chats.service.ChatMemberService
 import me.soknight.minigram.chats.service.ChatMessageService
 import me.soknight.minigram.chats.service.ChatService
+import me.soknight.minigram.chats.service.UserKeyService
 
 @OptIn(ExperimentalKtorApi::class)
 fun Application.configureRouting(
     chatService: ChatService,
     memberService: ChatMemberService,
     messageService: ChatMessageService,
-    profileClientFactory: ProfileClientFactory
+    profileClientFactory: ProfileClientFactory,
+    userKeyService: UserKeyService
 ) {
     routing {
         get("/health") { call.respond(HttpStatusCode.OK, mapOf("status" to "ok")) }.hide()
@@ -27,5 +30,6 @@ fun Application.configureRouting(
         chatRoutes(chatService, profileClientFactory)
         chatMemberRoutes(memberService, profileClientFactory)
         chatMessageRoutes(messageService, profileClientFactory)
+        userKeyRoutes(userKeyService, profileClientFactory)
     }
 }
