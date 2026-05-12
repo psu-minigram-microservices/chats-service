@@ -47,4 +47,6 @@ jobs:
         uses: useblacksmith/build-push-action@v2
         with:
           push: true
-          tags: ghcr.io/psu-minigram-microservices/chats-service:${{ steps.tag.outputs.value }}
+          tags: |
+            ghcr.io/psu-minigram-microservices/chats-service:${{ steps.tag.outputs.value }}
+            ghcr.io/psu-minigram-microservices/chats-service:latest
