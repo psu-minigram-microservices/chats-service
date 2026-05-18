@@ -10,7 +10,7 @@ kotlinx-datetime        = "0.7.1"
 kotlinx-serialization   = "1.11.0"
 ktor                    = "3.4.3"
 logback                 = "1.5.32"
-mockk                   = "1.13.16"
+mockk                   = "1.14.9"
 postgresql              = "42.7.11"
 
 [libraries]
